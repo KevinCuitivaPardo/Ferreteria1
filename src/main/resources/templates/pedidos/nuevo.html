@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina('Nuevo pedido', 'pedidos', ~{::contenido}, ~{::scripts})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h1>Nuevo pedido</h1>
+            <p class="text-secundario">Domicilio · Vendedor: <strong th:text="${nombreVendedor}"></strong></p>
+        </div>
+        <div class="card px-5 py-3 text-center">
+            <div class="text-xs uppercase tracking-wide text-secundario">Descuento máximo permitido</div>
+            <div class="text-2xl font-bold text-accent" th:text="${@formato.porcentaje(descuentoMaximo)} + '%'">0%</div>
+        </div>
+    </div>
+
+    <div th:unless="${#lists.isEmpty(errores)}" class="aviso aviso-error" role="alert">
+        <th:block th:replace="~{fragments/iconos :: alerta('mt-0.5 h-5 w-5 shrink-0')}"/>
+        <div>
+            <strong>No se pudo guardar el pedido:</strong>
+            <ul class="mt-1 list-disc pl-5">
+                <li th:each="e : ${errores}" th:text="${e}"></li>
+            </ul>
+        </div>
+    </div>
+
+    <form method="post" id="formPedido" th:action="@{/Pedidos/Nuevo}"
+          th:with="tope=${descuentoMaximo.intValue()}">
+
+        <div class="grid gap-6 xl:grid-cols-3">
+
+            <div class="space-y-6 xl:col-span-2">
+
+                <!-- ========== 1. Cliente y dirección ========== -->
+                <section class="card card-body" aria-labelledby="titulo-cliente">
+                    <h2 id="titulo-cliente" class="mb-4 text-[19px]">1. Cliente y dirección de entrega</h2>
+                    <div class="grid gap-4 md:grid-cols-2">
+
+                        <div>
+                            <label class="label" for="celular1">
+                                Celular principal <span class="text-peligro-texto" aria-hidden="true">*</span>
+                            </label>
+                            <input id="celular1" name="cliente.celular1" type="tel" inputmode="numeric" class="input"
+                                   th:value="${form.cliente.celular1}" autocomplete="off" required
+                                   aria-describedby="ayuda-celular"/>
+                            <p id="ayuda-celular" class="ayuda">
+                                Escribe el celular y pasa al siguiente campo. Si el cliente ya existe, sus datos se llenan solos.
+                            </p>
+                            <p id="estado-cliente" class="ayuda font-medium text-accent" role="status"
+                               aria-live="polite"></p>
+                        </div>
+
+                        <div>
+                            <label class="label" for="celular2">Otro celular</label>
+                            <input id="celular2" name="cliente.celular2" type="tel" inputmode="numeric" class="input"
+                                   th:value="${form.cliente.celular2}" autocomplete="off"/>
+                        </div>
+
+                        <div>
+                            <label class="label" for="nombreFerreteria">Nombre de la ferretería</label>
+                            <input id="nombreFerreteria" name="cliente.nombreFerreteria" class="input"
+                                   th:value="${form.cliente.nombreFerreteria}" autocomplete="off"/>
+                        </div>
+
+                        <div>
+                            <label class="label" for="nombreCliente">
+                                Nombre de quien hace el pedido <span class="text-peligro-texto" aria-hidden="true">*</span>
+                            </label>
+                            <input id="nombreCliente" name="cliente.nombreCliente" class="input"
+                                   th:value="${form.cliente.nombreCliente}" autocomplete="off" required/>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="label" for="direccion">
+                                Dirección de entrega <span class="text-peligro-texto" aria-hidden="true">*</span>
+                            </label>
+                            <input id="direccion" name="cliente.direccion" class="input"
+                                   placeholder="Ej: Carrera 15 # 85-20, Bogotá"
+                                   th:value="${form.cliente.direccion}" autocomplete="off" required
+                                   aria-describedby="estado-direccion"/>
+                            <p id="estado-direccion" class="ayuda font-medium" role="status" aria-live="polite">
+                                Incluye la ciudad o el barrio para que se ubique bien en el mapa.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="label" for="ubicacion">Referencia / barrio</label>
+                            <input id="ubicacion" name="cliente.ubicacion" class="input"
+                                   th:value="${form.cliente.ubicacion}" autocomplete="off"/>
+                        </div>
+
+                        <div>
+                            <label class="label" for="horario">Horario de recepción</label>
+                            <input id="horario" name="cliente.horario" class="input"
+                                   th:value="${form.cliente.horario}" autocomplete="off"/>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ========== 2. Productos ========== -->
+                <section class="card overflow-hidden" aria-labelledby="titulo-productos">
+                    <div class="card-body pb-3">
+                        <h2 id="titulo-productos" class="text-[19px]">2. Productos</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="tabla">
+                            <caption class="sr-only">Productos del pedido. Elige el producto y escribe la cantidad.</caption>
+                            <thead>
+                            <tr>
+                                <th scope="col">Producto</th>
+                                <th scope="col" class="w-32">Cantidad</th>
+                                <th scope="col" class="text-right">Precio</th>
+                                <th scope="col" class="text-right">Subtotal</th>
+                            </tr>
+                            </thead>
+                            <tbody id="lineas">
+                            <tr th:each="linea, i : ${form.lineas}" class="linea">
+                                <td class="min-w-[18rem]">
+                                    <label class="sr-only" th:for="|producto-${i.index}|"
+                                           th:text="|Producto de la línea ${i.count}|"></label>
+                                    <select th:id="|producto-${i.index}|" th:name="|lineas[${i.index}].productoId|"
+                                            class="input linea-producto">
+                                        <option value="0">Elige un producto</option>
+                                        <option th:each="p : ${productos}" th:value="${p.id}"
+                                                th:selected="${p.id == linea.productoId}"
+                                                th:attr="data-precio=${@formato.plano(p.precioVenta)},data-stock=${p.stock}"
+                                                th:text="|${p.codigo} · ${p.nombre} ${p.medida} (stock: ${p.stock})|"></option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <label class="sr-only" th:for="|cantidad-${i.index}|"
+                                           th:text="|Cantidad de la línea ${i.count}|"></label>
+                                    <input th:id="|cantidad-${i.index}|" type="number"
+                                           th:name="|lineas[${i.index}].cantidad|" class="input linea-cantidad"
+                                           min="1" max="100000" step="1" th:value="${linea.cantidad}"/>
+                                </td>
+                                <td class="whitespace-nowrap text-right"><span class="linea-precio">—</span></td>
+                                <td class="whitespace-nowrap text-right font-semibold"><span class="linea-subtotal">—</span></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="card-body border-t border-separador/20">
+                        <button type="button" id="agregar-linea" class="btn btn-secondary btn-sm" data-multiple>
+                            <th:block th:replace="~{fragments/iconos :: mas('h-4 w-4')}"/>Agregar otra línea
+                        </button>
+                    </div>
+
+                    <div class="card-body border-t border-separador/20">
+                        <div class="grid gap-3 sm:grid-cols-3 sm:items-center">
+                            <label for="descuento" class="label mb-0">Descuento (opcional)</label>
+                            <div class="sm:col-span-2">
+                                <select id="descuento" name="descuentoElegido" class="input"
+                                        aria-describedby="ayuda-descuento" th:disabled="${tope == 0}">
+                                    <option th:each="d : ${#numbers.sequence(0, tope)}" th:value="${d}"
+                                            th:selected="${d == form.descuentoElegido.intValue()}"
+                                            th:text="${d == 0} ? 'Sin descuento' : ${d + ' %'}"></option>
+                                </select>
+                                <p id="ayuda-descuento" class="ayuda">
+                                    <span th:if="${tope == 0}">Tu usuario no tiene descuento permitido.</span>
+                                    <span th:unless="${tope == 0}"
+                                          th:text="|Puedes elegir hasta ${tope} %. Si no eliges nada, el pedido va sin descuento.|"></span>
+                                </p>
+                            </div>
+                        </div>
+                        <p class="ayuda mt-4">Solo aparecen productos con existencias en esta sucursal.</p>
+                    </div>
+                </section>
+
+                <th:block th:replace="~{fragments/pago :: bloque('3', 'Opcional: con cuánto pagará, para que el domiciliario lleve el cambio.')}"/>
+            </div>
+
+            <!-- ========== 4. Resumen ========== -->
+            <div>
+                <aside class="card card-body sticky top-24" aria-labelledby="titulo-resumen">
+                    <h2 id="titulo-resumen" class="mb-4 text-[19px]">4. Resumen</h2>
+
+                    <dl class="space-y-2 text-[15px]" aria-live="polite">
+                        <div class="flex justify-between">
+                            <dt class="text-secundario">Subtotal</dt>
+                            <dd id="resumen-subtotal" class="font-semibold">$ 0</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt id="etiqueta-descuento" class="text-secundario">Descuento (0%)</dt>
+                            <dd id="resumen-descuento" class="font-semibold">$ 0</dd>
+                        </div>
+                        <div class="flex items-baseline justify-between border-t border-separador/25 pt-3">
+                            <dt class="text-base font-semibold">Total</dt>
+                            <dd id="resumen-total" class="text-2xl font-bold text-accent">$ 0</dd>
+                        </div>
+                    </dl>
+
+                    <p class="ayuda mb-5 mt-3">
+                        Al guardar, la dirección se ubica en el mapa y el administrador puede asignar un domiciliario.
+                    </p>
+
+                    <div class="grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <th:block th:replace="~{fragments/iconos :: circulo-check('h-5 w-5')}"/>Guardar pedido
+                        </button>
+                        <a th:href="@{/Pedidos/Lista}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </aside>
+            </div>
+
+        </div>
+    </form>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/lineas.js}" defer></script>
+    <script th:src="@{/js/pago.js}" defer></script>
+    <script th:src="@{/js/nuevo-pedido.js}" defer></script>
+</th:block>
+</body>
+</html>

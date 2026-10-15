@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina('Usuarios', 'usuarios', ~{::contenido}, ~{::scripts})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <h1 class="mb-6">Usuarios</h1>
+
+    <section class="card card-body mb-8" aria-labelledby="titulo-crear">
+        <h2 id="titulo-crear" class="mb-4 text-[19px]">Crear usuario</h2>
+        <form method="post" th:action="@{/Usuarios}" class="grid gap-4 md:grid-cols-12 md:items-end">
+            <div class="md:col-span-3">
+                <label class="label" for="nombreUsuario">Usuario</label>
+                <input id="nombreUsuario" name="nombreUsuario" th:value="${nombreUsuario}" class="input"
+                       placeholder="Ej: vendedor-1" autocomplete="off" required/>
+            </div>
+
+            <div class="md:col-span-3">
+                <label class="label" for="clave">Contraseña</label>
+                <input id="clave" name="clave" type="password" class="input" autocomplete="new-password" required/>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="label" for="rol">Rol</label>
+                <select id="rol" name="rol" class="input">
+                    <option th:each="r : ${roles}" th:value="${r.clave}" th:text="${r.etiqueta}"
+                            th:selected="${r.clave == rol}"></option>
+                </select>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="label" for="sucursalId">Sucursal</label>
+                <select id="sucursalId" name="sucursalId" class="input">
+                    <option th:each="s : ${sucursales}" th:value="${s.id}" th:text="${s.nombre}"
+                            th:selected="${sucursalElegida != null && s.id == sucursalElegida}"></option>
+                </select>
+            </div>
+
+            <div class="md:col-span-2">
+                <button type="submit" class="btn btn-primary w-full">Crear</button>
+            </div>
+        </form>
+        <p class="ayuda">
+            El administrador trabaja en todas las sucursales (la sucursal elegida se ignora).
+            El vendedor y el domiciliario pertenecen a la sucursal que elijas.
+        </p>
+    </section>
+
+    <h2 class="mb-3 text-[19px]">Usuarios existentes</h2>
+
+    <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="tabla">
+                <caption class="sr-only">Usuarios del sistema</caption>
+                <thead>
+                <tr>
+                    <th scope="col">Usuario</th>
+                    <th scope="col">Rol</th>
+                    <th scope="col">Sucursal</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col"><span class="sr-only">Acciones</span></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="u : ${lista}">
+                    <td class="font-semibold" th:text="${u.nombreUsuario}"></td>
+                    <td th:text="${u.rol.etiqueta}"></td>
+                    <td>
+                        <span th:if="${u.sucursalId != null}" th:text="${nombresSucursal.get(u.sucursalId)}"></span>
+                        <span th:unless="${u.sucursalId != null}" class="text-secundario">Todas</span>
+                    </td>
+                    <td>
+                        <span th:if="${u.activo}" class="estado estado-entregado">Activo</span>
+                        <span th:unless="${u.activo}" class="estado estado-pendiente">Desactivado</span>
+                    </td>
+                    <td class="text-right">
+                        <form th:unless="${u.esAdminPrincipal()}" method="post"
+                              th:action="@{/Usuarios/{id}/activo(id=${u.id})}" class="inline">
+                            <button type="submit" class="btn btn-secondary btn-sm"
+                                    th:text="${u.activo} ? 'Desactivar' : 'Activar'">Desactivar</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/usuarios.js}" defer></script>
+</th:block>
+</body>
+</html>

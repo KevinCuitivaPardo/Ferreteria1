@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Bloque de pago de los formularios de venta y de pedido. Usa las variables "form" (con medioPago y
+  montoRecibido) y "mediosPago" del modelo. El script pago.js muestra el total y calcula el cambio.
+-->
+<section th:fragment="bloque(numero, aviso)" class="card card-body" aria-labelledby="titulo-pago">
+    <h2 id="titulo-pago" class="mb-4 text-[19px]" th:text="|${numero}. Pago|">3. Pago</h2>
+
+    <div class="grid gap-4 md:grid-cols-3 md:items-start">
+        <div>
+            <label for="medioPago" class="label">Medio de pago</label>
+            <select id="medioPago" name="medioPago" class="input">
+                <option th:each="m : ${mediosPago}" th:value="${m.clave}" th:text="${m.etiqueta}"
+                        th:selected="${m.clave == form.medioPago}"></option>
+            </select>
+        </div>
+
+        <div id="bloque-recibido">
+            <label for="montoRecibido" class="label">Paga con</label>
+            <input id="montoRecibido" name="montoRecibido" type="number" min="0" step="100" inputmode="numeric"
+                   class="input" placeholder="Opcional"
+                   th:value="${form.montoRecibido != null} ? ${@formato.plano(form.montoRecibido)} : null"/>
+            <p class="ayuda" th:text="${aviso}">Para calcular el cambio.</p>
+        </div>
+
+        <div class="rounded-2xl bg-relleno/10 px-4 py-3 text-center">
+            <div class="text-xs uppercase tracking-wide text-secundario">Total a pagar</div>
+            <div id="pago-total" class="text-2xl font-bold text-accent">$ 0</div>
+            <div id="pago-cambio" class="min-h-[1.25rem] text-[14px] font-medium text-secundario" aria-live="polite"></div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

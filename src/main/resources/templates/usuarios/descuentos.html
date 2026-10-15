@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina('Descuentos', 'descuentos', ~{::contenido}, ~{})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <header class="mb-6">
+        <h1>Descuentos por vendedor</h1>
+        <p class="mt-1 text-secundario">
+            El porcentaje se aplica al total de cada pedido nuevo. Los pedidos ya guardados no cambian.
+        </p>
+    </header>
+
+    <form method="post" th:action="@{/Descuentos}">
+        <div class="card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="tabla">
+                    <caption class="sr-only">Descuento asignado a cada vendedor</caption>
+                    <thead>
+                    <tr>
+                        <th scope="col">Vendedor</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col" class="text-right">Descuento (%)</th>
+                        <th scope="col"><span class="sr-only">Quitar descuento</span></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="f, i : ${form.filas}">
+                        <td>
+                            <strong th:text="${f.nombreUsuario}"></strong>
+                            <input type="hidden" th:name="|filas[${i.index}].id|" th:value="${f.id}"/>
+                            <input type="hidden" th:name="|filas[${i.index}].nombreUsuario|"
+                                   th:value="${f.nombreUsuario}"/>
+                        </td>
+                        <td>
+                            <span class="estado" th:classappend="${f.activo} ? 'estado-entregado' : 'estado-cancelado'"
+                                  th:text="${f.activo} ? 'Activo' : 'Inactivo'">Activo</span>
+                        </td>
+                        <td class="text-right">
+                            <label class="sr-only" th:for="|pct-${i.index}|"
+                                   th:text="|Descuento de ${f.nombreUsuario} en porcentaje|"></label>
+                            <div class="inline-flex items-center gap-2">
+                                <input th:id="|pct-${i.index}|" type="number" class="input w-28 text-right"
+                                       th:name="|filas[${i.index}].descuentoPct|"
+                                       th:value="${@formato.plano(f.descuentoPct)}" min="0" max="100" step="1"/>
+                                <span aria-hidden="true">%</span>
+                            </div>
+                        </td>
+                        <td class="text-right">
+                            <!-- Va fuera del formulario principal (los formularios no se anidan): se enlaza con form="..." -->
+                            <button type="submit" class="btn btn-danger btn-sm" th:attr="form=|quitar-${f.id}|"
+                                    th:disabled="${f.descuentoPct.signum() == 0}"
+                                    th:title="${f.descuentoPct.signum() == 0} ? 'Este vendedor no tiene descuento' : 'Quitar el descuento'">
+                                Quitar
+                            </button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(form.filas)}">
+                        <td colspan="4" class="py-12 text-center text-secundario">Todavía no hay vendedores.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-6 flex flex-wrap gap-3">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <th:block th:replace="~{fragments/iconos :: check('h-5 w-5')}"/>Guardar descuentos
+            </button>
+            <a th:href="@{/}" class="btn btn-secondary btn-lg">Volver al inicio</a>
+        </div>
+    </form>
+
+    <!-- Un formulario por vendedor para quitarle el descuento (con confirmación) -->
+    <form th:each="f : ${form.filas}" th:id="|quitar-${f.id}|" method="post"
+          th:action="@{/Descuentos/{id}/quitar(id=${f.id})}"
+          data-confirmar-titulo="¿Quitar el descuento?" data-confirmar-boton="Quitar" data-confirmar-peligro
+          th:attr="data-confirmar=|${f.nombreUsuario} dejará de tener descuento y venderá a precio completo. Las ventas anteriores no cambian.|"></form>
+</th:block>
+</body>
+</html>

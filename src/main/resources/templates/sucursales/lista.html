@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina('Sucursales', 'sucursales', ~{::contenido}, ~{})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1>Sucursales</h1>
+            <p class="text-secundario">Cada sucursal tiene su propio inventario, sus vendedores y sus domiciliarios.</p>
+        </div>
+        <a th:href="@{/Sucursales/Nueva}" class="btn btn-primary">
+            <th:block th:replace="~{fragments/iconos :: mas('h-4 w-4')}"/>Nueva sucursal
+        </a>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2">
+        <article th:each="s : ${lista}" class="card card-body" th:classappend="${!s.activa} ? 'opacity-70'">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex min-w-0 items-start gap-3">
+                    <span class="icono-tile bg-exito">
+                        <th:block th:replace="~{fragments/iconos :: tienda('h-6 w-6')}"/>
+                    </span>
+                    <div class="min-w-0">
+                        <h2 class="truncate text-[19px]" th:text="${s.nombre}"></h2>
+                        <p class="text-[15px] text-secundario" th:text="${s.direccion}"></p>
+                    </div>
+                </div>
+                <span th:if="${s.activa}" class="estado estado-entregado">Activa</span>
+                <span th:unless="${s.activa}" class="estado estado-pendiente">Desactivada</span>
+            </div>
+
+            <p class="mt-3 flex items-center gap-1.5 text-[14px]"
+               th:classappend="${s.tieneUbicacion()} ? 'text-secundario' : 'text-aviso-texto'">
+                <th:block th:replace="~{fragments/iconos :: ubicacion('h-4 w-4')}"/>
+                <span th:if="${s.tieneUbicacion()}"
+                      th:text="${#numbers.formatDecimal(s.latitud, 1, 5, 'POINT')} + ', ' + ${#numbers.formatDecimal(s.longitud, 1, 5, 'POINT')}"></span>
+                <span th:unless="${s.tieneUbicacion()}">Sin ubicación en el mapa: las rutas no podrán salir de aquí.</span>
+            </p>
+
+            <div class="mt-4 flex flex-wrap gap-2">
+                <a th:href="@{/Sucursales/{id}/editar(id=${s.id})}" class="btn btn-secondary btn-sm">Editar</a>
+                <form method="post" th:action="@{/Sucursales/{id}/activa(id=${s.id})}">
+                    <button type="submit" class="btn btn-sm" th:classappend="${s.activa} ? 'btn-danger' : 'btn-secondary'"
+                            th:text="${s.activa} ? 'Desactivar' : 'Activar'">Desactivar</button>
+                </form>
+            </div>
+        </article>
+    </div>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: pagina('Movimientos', 'inventario', ~{::contenido}, ~{})}">
+<body>
+<th:block th:fragment="contenido">
+    <div class="mx-auto max-w-3xl">
+        <a th:href="@{/Productos}" class="btn btn-ghost btn-sm mb-3 -ml-3">
+            <th:block th:replace="~{fragments/iconos :: flecha-izquierda('h-4 w-4')}"/>Inventario</a>
+
+        <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <h1>Movimientos</h1>
+                <p class="mt-1 text-secundario">
+                    <strong th:text="${producto.nombre}"></strong> <span th:text="${producto.medida}"></span>
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="rounded-xl px-4 py-2 text-center"
+                     th:classappend="${producto.stockBajo()} ? 'bg-peligro/10 text-peligro-texto' : 'bg-accent/10 text-accent'">
+                    <div class="text-xs uppercase tracking-wide opacity-75">Stock actual</div>
+                    <div class="text-2xl font-bold" th:text="${producto.stock}"></div>
+                </div>
+                <a sec:authorize="hasRole('admin')" class="btn btn-secondary"
+                   th:href="@{/Ajustar/{id}(id=${producto.id})}">Ajustar stock</a>
+            </div>
+        </div>
+
+        <form method="post" th:action="@{/Movimientos/{id}(id=${producto.id})}" class="card card-body mb-8">
+            <div class="grid gap-4 md:grid-cols-12">
+                <div class="md:col-span-4">
+                    <span class="label" id="etiqueta-tipo">Tipo</span>
+                    <div class="segmentado" role="radiogroup" aria-labelledby="etiqueta-tipo">
+                        <label>
+                            <input type="radio" name="tipo" value="entrada" th:checked="${tipo == 'entrada'}"/>
+                            <span>Entrada</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="tipo" value="salida" th:checked="${tipo == 'salida'}"/>
+                            <span>Salida</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="md:col-span-3">
+                    <label class="label" for="cantidad">Cantidad</label>
+                    <input id="cantidad" name="cantidad" th:value="${cantidad}" type="number" min="1" class="input"
+                           required/>
+                </div>
+                <div class="md:col-span-5">
+                    <label class="label" for="motivo">Motivo</label>
+                    <input id="motivo" name="motivo" th:value="${motivo}" class="input"
+                           placeholder="Ej: compra a proveedor"/>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-5 w-full">Registrar movimiento</button>
+        </form>
+
+        <th:block sec:authorize="hasRole('admin')">
+            <h2 class="mb-3 text-[19px]">Existencias en todas las sucursales</h2>
+            <div class="card card-body mb-8">
+                <ul class="divide-y divide-separador/20">
+                    <li th:each="x : ${existencias}" class="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                        <span th:text="${x.sucursal}"></span>
+                        <span class="font-semibold" th:text="${x.stock}"></span>
+                    </li>
+                </ul>
+            </div>
+
+            <h2 class="mb-3 text-[19px]">Últimos movimientos de esta sucursal</h2>
+            <div th:if="${#lists.isEmpty(historial)}" class="aviso aviso-info">
+                <p>Este producto no tiene movimientos.</p>
+            </div>
+            <div th:unless="${#lists.isEmpty(historial)}" class="card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="tabla">
+                        <thead>
+                        <tr>
+                            <th scope="col">Fecha</th>
+                            <th scope="col">Tipo</th>
+                            <th scope="col" class="text-right">Cantidad</th>
+                            <th scope="col">Motivo</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="m : ${historial}">
+                            <td class="whitespace-nowrap" th:text="${@formato.fecha(m.fecha)}"></td>
+                            <td>
+                                <span th:if="${m.esEntrada()}" class="estado estado-entregado">Entrada</span>
+                                <span th:unless="${m.esEntrada()}" class="estado estado-no_entregado">Salida</span>
+                            </td>
+                            <td class="text-right" th:text="${m.cantidadAbsoluta()}"></td>
+                            <td th:text="${m.motivo}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </th:block>
+    </div>
+</th:block>
+</body>
+</html>

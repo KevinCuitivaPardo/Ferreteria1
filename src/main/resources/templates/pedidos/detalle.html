@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: pagina(|Pedido ${pedido.numero}|, 'pedidos', ~{::contenido}, ~{::scripts})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <nav aria-label="Ruta de navegación" class="no-imprimir mb-4 text-sm text-secundario">
+        <ol class="flex flex-wrap items-center gap-2">
+            <li><a th:href="@{/}" class="hover:underline">Inicio</a></li>
+            <li aria-hidden="true">/</li>
+            <li><a th:href="@{/Pedidos/Lista}" class="hover:underline">Pedidos</a></li>
+            <li aria-hidden="true">/</li>
+            <li class="font-semibold text-etiqueta" aria-current="page" th:text="${pedido.numero}"></li>
+        </ol>
+    </nav>
+
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h1>Pedido <span th:text="${pedido.numero}"></span></h1>
+            <p class="text-secundario">
+                <span th:text="${@formato.fecha(pedido.fecha)}"></span> · <span th:text="${pedido.sucursal}"></span>
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="estado text-sm" th:classappend="|estado-${pedido.estado}|"
+                  th:text="${T(com.ferreteria.pedidos.domain.EstadoPedido).etiquetaDe(pedido.estado)}"></span>
+            <button type="button" class="btn btn-secondary no-imprimir" data-imprimir>
+                <th:block th:replace="~{fragments/iconos :: imprimir('h-4 w-4')}"/>Imprimir
+            </button>
+        </div>
+    </div>
+
+    <div class="mb-6 grid gap-6 lg:grid-cols-5">
+
+        <section class="card card-body lg:col-span-3" aria-labelledby="titulo-cliente">
+            <h2 id="titulo-cliente" class="mb-4 text-[19px]">Cliente y entrega</h2>
+            <dl class="grid gap-x-4 gap-y-3 text-[15px] sm:grid-cols-[9rem_1fr]">
+                <dt class="font-semibold text-secundario">Ferretería</dt>
+                <dd th:text="${#strings.isEmpty(pedido.ferreteria)} ? '—' : ${pedido.ferreteria}"></dd>
+
+                <dt class="font-semibold text-secundario">Hizo el pedido</dt>
+                <dd th:text="${pedido.cliente}"></dd>
+
+                <dt class="font-semibold text-secundario">Dirección</dt>
+                <dd th:text="${pedido.direccion}"></dd>
+
+                <dt class="font-semibold text-secundario">Referencia</dt>
+                <dd th:text="${#strings.isEmpty(pedido.ubicacion)} ? '—' : ${pedido.ubicacion}"></dd>
+
+                <dt class="font-semibold text-secundario">Horario</dt>
+                <dd th:text="${#strings.isEmpty(pedido.horario)} ? '—' : ${pedido.horario}"></dd>
+
+                <dt class="font-semibold text-secundario">Celular</dt>
+                <dd>
+                    <a class="text-accent hover:underline" th:href="|tel:${pedido.celular1}|"
+                       th:text="${pedido.celular1}"></a>
+                    <th:block th:unless="${#strings.isEmpty(pedido.celular2)}">
+                        <span> · </span>
+                        <a class="text-accent hover:underline" th:href="|tel:${pedido.celular2}|"
+                           th:text="${pedido.celular2}"></a>
+                    </th:block>
+                </dd>
+            </dl>
+        </section>
+
+        <section class="card card-body lg:col-span-2" aria-labelledby="titulo-resumen">
+            <h2 id="titulo-resumen" class="mb-4 text-[19px]">Resumen y pago</h2>
+            <dl class="grid gap-x-4 gap-y-3 text-[15px] sm:grid-cols-2">
+                <dt class="font-semibold text-secundario">Vendedor</dt>
+                <dd th:text="${pedido.vendedor}"></dd>
+
+                <dt class="font-semibold text-secundario">Domiciliario</dt>
+                <dd>
+                    <span th:if="${pedido.domiciliario != null}" th:text="${pedido.domiciliario}"></span>
+                    <span th:unless="${pedido.domiciliario != null}" class="text-secundario">Sin asignar</span>
+                </dd>
+
+                <dt class="font-semibold text-secundario">Descuento</dt>
+                <dd th:text="${@formato.porcentaje(pedido.descuentoPct)} + '%'"></dd>
+
+                <dt class="font-semibold text-secundario">Medio de pago</dt>
+                <dd class="font-semibold" th:text="${pedido.medioPago.etiqueta}"></dd>
+
+                <th:block th:if="${pedido.montoRecibido != null}">
+                    <dt class="font-semibold text-secundario">Pagará con</dt>
+                    <dd th:text="${@formato.moneda(pedido.montoRecibido)}"></dd>
+
+                    <dt class="font-semibold text-secundario">Cambio</dt>
+                    <dd th:text="${@formato.moneda(pedido.cambio())}"></dd>
+                </th:block>
+
+                <dt class="font-semibold text-secundario">Total</dt>
+                <dd class="text-2xl font-bold text-accent" th:text="${@formato.moneda(pedido.total)}"></dd>
+            </dl>
+        </section>
+    </div>
+
+    <!-- Avance de la entrega -->
+    <section class="card card-body mb-6" aria-labelledby="titulo-avance"
+             th:if="${pedido.asignadoEn != null or pedido.iniciadoEn != null or pedido.finalizadoEn != null}">
+        <h2 id="titulo-avance" class="mb-4 text-[19px]">Avance de la entrega</h2>
+        <ol class="grid gap-3 text-[15px] sm:grid-cols-3">
+            <li th:if="${pedido.asignadoEn != null}" class="rounded-xl bg-relleno/10 px-4 py-3">
+                <div class="text-[13px] font-semibold text-secundario">Asignado</div>
+                <div class="font-medium" th:text="${@formato.fecha(pedido.asignadoEn)}"></div>
+            </li>
+            <li th:if="${pedido.iniciadoEn != null}" class="rounded-xl bg-relleno/10 px-4 py-3">
+                <div class="text-[13px] font-semibold text-secundario">Salió a entregar</div>
+                <div class="font-medium" th:text="${@formato.fecha(pedido.iniciadoEn)}"></div>
+            </li>
+            <li th:if="${pedido.finalizadoEn != null}" class="rounded-xl bg-relleno/10 px-4 py-3">
+                <div class="text-[13px] font-semibold text-secundario">Cerrado</div>
+                <div class="font-medium" th:text="${@formato.fecha(pedido.finalizadoEn)}"></div>
+                <div class="text-[13px] text-secundario" th:if="${pedido.iniciadoEn != null}"
+                     th:text="|Tardó ${@formato.duracion(pedido.iniciadoEn, pedido.finalizadoEn)}|"></div>
+            </li>
+        </ol>
+        <p class="mt-4 text-[15px]" th:if="${!#strings.isEmpty(pedido.notaEntrega)}">
+            <span class="font-semibold text-secundario">Nota del domiciliario:</span>
+            <span th:text="${pedido.notaEntrega}"></span>
+        </p>
+    </section>
+
+    <!-- Foto(s) de la entrega, para revisarlas -->
+    <section class="card card-body mb-6" aria-labelledby="titulo-fotos" th:if="${!#lists.isEmpty(detalle.fotos)}">
+        <h2 id="titulo-fotos" class="mb-4 text-[19px]">Foto de la entrega</h2>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <figure th:each="f : ${detalle.fotos}">
+                <a th:href="@{/Fotos/{pedido}/{foto}(pedido=${pedido.id}, foto=${f.id})}" target="_blank" rel="noopener"
+                   title="Abrir en tamaño completo">
+                    <img class="miniatura-foto" loading="lazy" alt="Foto de la entrega"
+                         th:src="@{/Fotos/{pedido}/{foto}(pedido=${pedido.id}, foto=${f.id})}"/>
+                </a>
+                <figcaption class="mt-2 text-[13px] text-secundario">
+                    Tomada por <strong th:text="${f.subidaPor}"></strong> · <span th:text="${@formato.fecha(f.fecha)}"></span>
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <!-- Dónde se entrega y por dónde se llega -->
+    <section class="card card-body no-imprimir mb-6" aria-labelledby="titulo-mapa">
+        <h2 id="titulo-mapa" class="mb-1 text-[19px]">Ubicación de la entrega</h2>
+        <p id="resumen-ruta" class="ayuda mb-3 mt-0" role="status" aria-live="polite"></p>
+        <div id="mapa-pedido" class="mapa" role="application" aria-label="Mapa de la entrega"
+             th:attr="data-lat=${pedido.latitud},data-lng=${pedido.longitud},
+                      data-origen-lat=${pedido.sucursalLatitud},data-origen-lng=${pedido.sucursalLongitud},
+                      data-sucursal=${pedido.sucursal},data-estado=${pedido.estado},
+                      data-cliente=${pedido.cliente},data-direccion=${pedido.direccion},
+                      data-conductor-id=${pedido.estado == 'en_ruta'} ? ${pedido.domiciliarioId} : null,
+                      data-conductor=${pedido.domiciliario}"></div>
+
+        <p class="ayuda" th:if="${pedido.estado == 'en_ruta'}">
+            🛵 <strong th:text="${pedido.domiciliario}"></strong> va en camino: su posición se actualiza en vivo en el mapa.
+        </p>
+        <p class="ayuda">
+            La ubicación se busca en OpenStreetMap a partir de la dirección y es aproximada (a nivel de calle).
+        </p>
+
+        <!-- El administrador puede fijar el punto exacto de la entrega -->
+        <form id="form-ubicacion" method="post" sec:authorize="hasRole('admin')"
+              th:action="@{/Pedidos/Detalle/{id}/ubicacion(id=${pedido.id})}"
+              class="mt-3 flex flex-wrap items-center gap-3">
+            <input type="hidden" id="nueva-latitud" name="latitud"/>
+            <input type="hidden" id="nueva-longitud" name="longitud"/>
+            <button type="button" id="ajustar-ubicacion" class="btn btn-secondary btn-sm">
+                <th:block th:replace="~{fragments/iconos :: ubicacion('h-4 w-4')}"/>Ajustar el punto de entrega
+            </button>
+            <button type="submit" id="guardar-ubicacion" class="btn btn-primary btn-sm" hidden>Guardar ubicación</button>
+            <span id="ayuda-ubicacion" class="text-[13px] text-secundario" role="status" aria-live="polite"></span>
+        </form>
+    </section>
+
+    <section class="card card-body no-imprimir mb-6" aria-labelledby="titulo-estado"
+             sec:authorize="hasRole('admin')">
+        <h2 id="titulo-estado" class="mb-4 text-[19px]">Gestionar pedido</h2>
+        <div class="grid gap-6 md:grid-cols-2">
+
+            <form method="post" th:action="@{/Pedidos/Detalle/{id}/domiciliario(id=${pedido.id})}" class="space-y-3">
+                <div>
+                    <label for="domiciliarioId" class="label">Domiciliario</label>
+                    <select id="domiciliarioId" name="domiciliarioId" class="input"
+                            th:disabled="${pedido.estado == 'en_ruta' or pedido.estado == 'entregado' or pedido.estado == 'no_entregado' or pedido.estado == 'cancelado'}">
+                        <option value="0">Sin asignar</option>
+                        <option th:each="d : ${domiciliarios}" th:value="${d.id}" th:text="${d.nombre}"
+                                th:selected="${pedido.domiciliarioId != null && d.id == pedido.domiciliarioId}"></option>
+                    </select>
+                    <p class="ayuda" th:if="${#lists.isEmpty(domiciliarios)}">
+                        Esta sucursal no tiene domiciliarios activos. Créalos en Usuarios.
+                    </p>
+                    <p class="ayuda" th:if="${pedido.estado == 'en_ruta'}">
+                        El pedido ya va en ruta: no se puede cambiar el domiciliario.
+                    </p>
+                    <p class="ayuda" th:unless="${pedido.estado == 'en_ruta'}">
+                        Al asignarlo, el pedido entra en la cola del domiciliario y le llega una alerta al instante.
+                    </p>
+                </div>
+                <button type="submit" class="btn btn-secondary w-full"
+                        th:disabled="${pedido.estado == 'en_ruta' or pedido.estado == 'entregado' or pedido.estado == 'no_entregado' or pedido.estado == 'cancelado'}">
+                    Guardar asignación</button>
+            </form>
+
+            <form method="post" th:action="@{/Pedidos/Detalle/{id}/estado(id=${pedido.id})}" class="space-y-3">
+                <div>
+                    <label for="nuevoEstado" class="label">Estado</label>
+                    <select id="nuevoEstado" name="estado" class="input">
+                        <option th:each="e : ${estados}" th:value="${e.clave}" th:text="${e.etiqueta}"
+                                th:selected="${e.clave == pedido.estado}"></option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Actualizar estado</button>
+            </form>
+        </div>
+        <p class="ayuda">
+            Si el pedido pasa a "No entregado" o "Cancelado", el stock vuelve al inventario de la sucursal.
+            Si vuelve a un estado activo, el stock se descuenta otra vez.
+        </p>
+    </section>
+
+    <section aria-labelledby="titulo-productos">
+        <h2 id="titulo-productos" class="mb-3 text-[19px]">Productos</h2>
+        <div class="card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="tabla">
+                    <caption class="sr-only" th:text="|Productos incluidos en el pedido ${pedido.numero}|"></caption>
+                    <thead>
+                    <tr>
+                        <th scope="col">Código</th>
+                        <th scope="col">Producto</th>
+                        <th scope="col">Medida</th>
+                        <th scope="col" class="text-right">Cantidad</th>
+                        <th scope="col" class="text-right">Precio unitario</th>
+                        <th scope="col" class="text-right">Subtotal</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item : ${detalle.items}">
+                        <td class="font-mono text-xs font-semibold" th:text="${item.codigo}"></td>
+                        <td th:text="${item.nombre}"></td>
+                        <td th:text="${item.medida}"></td>
+                        <td class="text-right" th:text="${item.cantidad}"></td>
+                        <td class="whitespace-nowrap text-right" th:text="${@formato.moneda(item.precioUnitario)}"></td>
+                        <td class="whitespace-nowrap text-right" th:text="${@formato.moneda(item.subtotal())}"></td>
+                    </tr>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th scope="row" colspan="5" class="text-right font-semibold">Subtotal</th>
+                        <td class="whitespace-nowrap text-right" th:text="${@formato.moneda(detalle.subtotal())}"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row" colspan="5" class="text-right font-semibold"
+                            th:text="|Descuento (${@formato.porcentaje(pedido.descuentoPct)}%)|"></th>
+                        <td class="whitespace-nowrap text-right" th:text="|− ${@formato.moneda(detalle.montoDescuento())}|"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row" colspan="5" class="text-right text-base">Total</th>
+                        <td class="whitespace-nowrap text-right text-base font-bold" th:text="${@formato.moneda(pedido.total)}"></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <div class="no-imprimir mt-6">
+        <a th:href="@{/Pedidos/Lista}" class="btn btn-secondary">
+            <th:block th:replace="~{fragments/iconos :: flecha-izquierda('h-4 w-4')}"/>Volver a pedidos
+        </a>
+    </div>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <link rel="stylesheet" th:href="@{/vendor/leaflet/leaflet.css}"/>
+    <script th:src="@{/vendor/leaflet/leaflet.js}"></script>
+    <script th:src="@{/js/mapa.js}"></script>
+    <script th:src="@{/js/pedido-ruta.js}"></script>
+</th:block>
+</body>
+</html>

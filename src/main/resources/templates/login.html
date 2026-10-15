@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina('Ingresar', 'login', ~{::contenido}, ~{::scripts})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <div class="fondo-login" aria-hidden="true"></div>
+
+    <div class="mx-auto flex min-h-[calc(100vh-9rem)] w-full max-w-[26rem] flex-col justify-center py-6">
+
+        <div class="tarjeta-login" th:classappend="${param.error} ? 'con-error'">
+
+            <!-- Marca -->
+            <div class="mb-8 flex flex-col items-center text-center">
+                <span class="logo-login mb-5">
+                    <th:block th:replace="~{fragments/iconos :: caja('h-10 w-10')}"/>
+                </span>
+                <h1 class="text-[30px] sm:text-[32px]">Bienvenido</h1>
+                <p class="mt-1.5 text-[16px] text-secundario">Ingresa para continuar en Ferretería</p>
+            </div>
+
+            <div th:if="${param.error}" class="aviso aviso-error !mb-5" role="alert">
+                <th:block th:replace="~{fragments/iconos :: alerta('mt-0.5 h-5 w-5 shrink-0')}"/>
+                <p>Usuario o contraseña incorrectos. Revísalos e inténtalo de nuevo.</p>
+            </div>
+
+            <form method="post" th:action="@{/Login}" id="form-login" class="space-y-4" novalidate>
+
+                <div>
+                    <label for="nombreUsuario" class="sr-only">Usuario</label>
+                    <div class="campo-login">
+                        <th:block th:replace="~{fragments/iconos :: usuario('icono-campo')}"/>
+                        <input id="nombreUsuario" name="nombreUsuario" class="input" placeholder="Usuario"
+                               autocomplete="username" autocapitalize="none" spellcheck="false" autofocus required/>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="clave" class="sr-only">Contraseña</label>
+                    <div class="campo-login">
+                        <th:block th:replace="~{fragments/iconos :: candado('icono-campo')}"/>
+                        <input id="clave" name="clave" type="password" class="input !pr-12" placeholder="Contraseña"
+                               autocomplete="current-password" required/>
+                        <button type="button" id="ver-clave" class="ver-clave" aria-label="Mostrar contraseña"
+                                aria-pressed="false">
+                            <span data-ojo><th:block th:replace="~{fragments/iconos :: ojo('h-5 w-5')}"/></span>
+                            <span data-ojo-cerrado hidden><th:block th:replace="~{fragments/iconos :: ojo-cerrado('h-5 w-5')}"/></span>
+                        </button>
+                    </div>
+                    <p id="aviso-mayusculas" class="ayuda !mt-2 flex items-center gap-1.5 text-aviso-texto" role="status" hidden>
+                        <th:block th:replace="~{fragments/iconos :: alerta('h-4 w-4 shrink-0')}"/>Tienes las mayúsculas activadas.
+                    </p>
+                </div>
+
+                <button type="submit" id="boton-entrar" class="btn btn-primary btn-lg w-full !rounded-[0.95rem]">
+                    <span>Ingresar</span>
+                    <th:block th:replace="~{fragments/iconos :: flecha-derecha('h-5 w-5')}"/>
+                </button>
+            </form>
+
+            <p class="mt-7 text-center text-[13px] text-terciario">
+                Inventario · Ventas · Domicilios
+            </p>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/login.js}" defer></script>
+</th:block>
+</body>
+</html>

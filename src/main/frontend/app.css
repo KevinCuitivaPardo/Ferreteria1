@@ -1,0 +1,645 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================
+   Sistema visual de la ferretería, inspirado en las Human Interface Guidelines de Apple:
+   - Claridad: tipografía del sistema, jerarquía con títulos grandes y mucho aire.
+   - Deferencia: el contenido manda; barras translúcidas, sin bordes pesados.
+   - Profundidad: capas con fondo agrupado, tarjetas redondeadas y transiciones suaves.
+   - Colores semánticos que cambian solos en modo oscuro.
+   - Objetivos táctiles de 44 px como mínimo.
+   Los componentes (.btn, .card, .input...) se usan desde las plantillas;
+   lo demás son utilidades de Tailwind directamente en el HTML.
+   ========================================================== */
+
+/* ---------- Colores del sistema (canales RGB, para poder usar /opacidad) ---------- */
+:root {
+  color-scheme: light dark;
+
+  --fondo: 242 242 247;        /* systemGroupedBackground */
+  --tarjeta: 255 255 255;      /* secondarySystemGroupedBackground */
+  --etiqueta: 0 0 0;
+  --secundario: 99 99 102;
+  --terciario: 142 142 147;
+  --separador: 60 60 67;
+  --relleno: 120 120 128;
+
+  --accent: 0 122 255;         /* systemBlue */
+  --peligro: 255 59 48;        /* systemRed */
+  --peligro-texto: 215 0 21;
+  --exito: 52 199 89;          /* systemGreen */
+  --exito-texto: 36 138 61;
+  --aviso: 255 149 0;          /* systemOrange */
+  --aviso-texto: 201 52 0;
+  --indigo: 88 86 214;
+  --morado: 175 82 222;
+  --turquesa: 48 176 199;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: 0 0 0;
+    --tarjeta: 28 28 30;
+    --etiqueta: 255 255 255;
+    --secundario: 174 174 178;
+    --terciario: 142 142 147;
+    --separador: 140 140 150;
+    --relleno: 120 120 128;
+
+    --accent: 10 132 255;
+    --peligro: 255 69 58;
+    --peligro-texto: 255 105 97;
+    --exito: 48 209 88;
+    --exito-texto: 48 209 88;
+    --aviso: 255 159 10;
+    --aviso-texto: 255 179 64;
+    --indigo: 94 92 230;
+    --morado: 191 90 242;
+    --turquesa: 64 200 224;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-fondo font-sans text-[17px] leading-snug text-etiqueta antialiased;
+    letter-spacing: -0.011em;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Títulos grandes, como en iOS */
+  h1 {
+    @apply text-[28px] font-bold leading-tight tracking-tight text-etiqueta sm:text-[34px];
+    letter-spacing: -0.022em;
+  }
+  h2, h3 {
+    @apply font-semibold tracking-tight text-etiqueta;
+  }
+
+  /* Los componentes (.btn, .tabla...) cambian display; el atributo hidden debe seguir ganando. */
+  [hidden] {
+    display: none !important;
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.25);
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  summary:focus-visible {
+    @apply outline-none ring-4 ring-accent/35;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* ---------- Botones ----------
+     .btn-primary = relleno (acción principal), .btn-secondary = tintado,
+     .btn-danger = tintado en rojo, .btn-ghost = texto. */
+  .btn {
+    @apply inline-flex min-h-[44px] select-none items-center justify-center gap-2 rounded-xl px-5 text-[17px] font-semibold transition duration-150 ease-ios active:scale-[0.97] active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-sm {
+    @apply min-h-[34px] rounded-ios px-3.5 text-[15px];
+  }
+  .btn-lg {
+    @apply min-h-[50px] px-6;
+  }
+  .btn-primary {
+    @apply bg-accent text-white hover:brightness-110;
+  }
+  .btn-secondary {
+    @apply bg-accent/[0.12] text-accent hover:bg-accent/20;
+  }
+  .btn-danger {
+    @apply bg-peligro/[0.12] text-peligro-texto hover:bg-peligro/20;
+  }
+  .btn-ghost {
+    @apply text-accent hover:bg-accent/10;
+  }
+
+  /* ---------- Tarjetas (listas agrupadas) ---------- */
+  .card {
+    @apply rounded-2xl bg-tarjeta shadow-tarjeta;
+  }
+  .card-body {
+    @apply p-5 sm:p-6;
+  }
+  .card-enlace {
+    @apply card block h-full p-5 text-etiqueta transition duration-200 ease-ios hover:-translate-y-0.5 hover:shadow-elevada active:scale-[0.98];
+  }
+
+  /* Icono en cuadro redondeado, como en Ajustes de iOS */
+  .icono-tile {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] text-white shadow-sm;
+  }
+
+  /* ---------- Formularios ---------- */
+  .label {
+    @apply mb-1.5 block text-[13px] font-semibold text-secundario;
+  }
+  .input {
+    @apply block min-h-[44px] w-full rounded-xl border border-separador/30 bg-tarjeta px-3.5 text-[17px] text-etiqueta shadow-none transition placeholder:text-terciario focus:border-accent focus:ring-4 focus:ring-accent/25;
+  }
+  select.input {
+    @apply pr-10;
+  }
+  .ayuda {
+    @apply mt-1.5 text-[13px] text-secundario;
+  }
+
+  /* ---------- Avisos (banners tintados) ---------- */
+  .aviso {
+    @apply mb-5 flex items-start gap-3 rounded-2xl px-4 py-3 text-[15px];
+  }
+  .aviso-exito {
+    @apply bg-exito/[0.14] text-exito-texto;
+  }
+  .aviso-error {
+    @apply bg-peligro/[0.12] text-peligro-texto;
+  }
+  .aviso-info {
+    @apply bg-accent/[0.1] text-accent;
+  }
+
+  /* ---------- Tablas como listas agrupadas ---------- */
+  .tabla {
+    @apply w-full text-left text-[15px];
+  }
+  .tabla thead th {
+    @apply whitespace-nowrap border-b border-separador/30 px-4 py-3 text-[12px] font-semibold uppercase tracking-wide text-secundario;
+  }
+  .tabla tbody td {
+    @apply border-b border-separador/20 px-4 py-3.5 align-middle;
+  }
+  .tabla tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  .tabla tbody tr {
+    @apply transition-colors;
+  }
+  .tabla tbody tr:hover td {
+    @apply bg-relleno/10;
+  }
+  .tabla tfoot th,
+  .tabla tfoot td {
+    @apply border-t border-separador/30 px-4 py-3;
+  }
+
+  /* Producto con stock en o por debajo del mínimo */
+  .tabla tbody tr.fila-alerta td {
+    @apply bg-peligro/[0.08] font-medium;
+  }
+  .tabla tbody tr.fila-alerta:hover td {
+    @apply bg-peligro/[0.14];
+  }
+
+  /* ---------- Navegación ---------- */
+  .barra {
+    @apply border-b border-separador/25 bg-tarjeta/75 backdrop-blur-xl backdrop-saturate-150;
+  }
+  .nav-enlace {
+    @apply inline-flex min-h-[36px] items-center gap-2 rounded-lg px-3 text-[15px] font-medium text-secundario transition-colors hover:bg-relleno/15 hover:text-etiqueta;
+  }
+  .nav-enlace[aria-current='page'] {
+    @apply bg-relleno/15 font-semibold text-accent;
+  }
+
+  /* Barra de pestañas inferior (móvil) */
+  .tab-barra {
+    @apply fixed inset-x-0 bottom-0 z-30 flex justify-around border-t border-separador/25 bg-tarjeta/80 backdrop-blur-xl backdrop-saturate-150;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab {
+    @apply flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 pb-1.5 pt-2 text-[10px] font-medium text-terciario transition-colors;
+  }
+  .tab[aria-current='page'] {
+    @apply text-accent;
+  }
+
+  /* ---------- Control segmentado ---------- */
+  .segmentado {
+    @apply inline-flex w-full rounded-ios bg-relleno/15 p-0.5;
+  }
+  .segmentado label {
+    @apply relative flex-1;
+  }
+  .segmentado input {
+    @apply sr-only;
+  }
+  .segmentado span {
+    @apply flex min-h-[40px] cursor-pointer items-center justify-center rounded-[8px] px-3 text-[15px] font-medium text-etiqueta transition duration-200 ease-ios;
+  }
+  .segmentado input:checked + span {
+    @apply bg-tarjeta font-semibold shadow-[0_1px_3px_rgb(0_0_0/0.15),0_0_0_0.5px_rgb(0_0_0/0.04)];
+  }
+  .segmentado input:focus-visible + span {
+    @apply ring-4 ring-accent/35;
+  }
+
+  /* ---------- Buscador con sugerencias ---------- */
+  .sugerencias {
+    @apply absolute left-0 right-0 top-full z-20 mt-1.5 max-h-96 overflow-y-auto rounded-2xl bg-tarjeta shadow-elevada;
+  }
+  .sugerencias a {
+    @apply block border-b border-separador/20 px-4 py-3 text-etiqueta last:border-b-0 hover:bg-relleno/10 focus-visible:bg-relleno/15;
+  }
+}
+
+/* ---------- Estados de pedido: píldoras tintadas (clases que arma el servidor: estado-<clave>) ---------- */
+.estado {
+  display: inline-block;
+  white-space: nowrap;
+  border-radius: 9999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.estado-pendiente    { background: rgb(var(--relleno) / 0.18);  color: rgb(var(--secundario)); }
+.estado-alistado     { background: rgb(var(--accent) / 0.14);   color: rgb(var(--accent)); }
+.estado-en_ruta      { background: rgb(var(--aviso) / 0.16);    color: rgb(var(--aviso-texto)); }
+.estado-entregado    { background: rgb(var(--exito) / 0.16);    color: rgb(var(--exito-texto)); }
+.estado-no_entregado { background: rgb(var(--peligro) / 0.14);  color: rgb(var(--peligro-texto)); }
+.estado-cancelado    { background: rgb(var(--morado) / 0.16);   color: rgb(var(--morado)); }
+
+/* ---------- Impresión (detalle de pedido) ---------- */
+@media print {
+  :root {
+    --fondo: 255 255 255;
+    --tarjeta: 255 255 255;
+    --etiqueta: 0 0 0;
+    --secundario: 60 60 67;
+  }
+  .no-imprimir {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    font-size: 0.95rem;
+  }
+  .card {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}
+
+/* ---------- Mapas (Leaflet + OpenStreetMap) ---------- */
+.mapa {
+  position: relative;
+  isolation: isolate; /* los paneles de Leaflet no se montan encima de la barra superior */
+  height: 20rem;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 1rem;
+  box-shadow: 0 0 0 0.5px rgb(var(--separador) / 0.25);
+  background: rgb(var(--relleno) / 0.12);
+}
+@media (min-width: 640px) {
+  .mapa { height: 24rem; }
+}
+.mapa-grande {
+  height: 62vh;
+  min-height: 22rem;
+}
+
+/* Alfiler de color: el color llega en la variable --pin */
+.pin {
+  position: relative;
+  display: block;
+  width: 26px;
+  height: 26px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--pin, #007aff);
+  border: 2.5px solid #fff;
+  box-shadow: 0 2px 7px rgb(0 0 0 / 0.4);
+  transform: rotate(-45deg);
+}
+.pin::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #fff;
+}
+.pin-sucursal { border-radius: 8px; transform: none; }
+.leaflet-div-icon.pin-contenedor { background: transparent; border: 0; }
+
+.leaflet-container { font-family: inherit; }
+.leaflet-popup-content-wrapper { border-radius: 14px; }
+.leaflet-popup-content { margin: 12px 14px; font-size: 14px; line-height: 1.35; }
+
+/* En modo oscuro el mapa también se oscurece */
+@media (prefers-color-scheme: dark) {
+  .mapa .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.85);
+  }
+}
+
+/* ---------- Hoja inferior de iOS (opciones extra en móvil) ---------- */
+.hoja { position: fixed; inset: 0; z-index: 40; }
+.hoja-fondo { position: absolute; inset: 0; background: rgb(0 0 0 / 0.4); }
+.hoja-panel {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: 1.25rem 1.25rem 0 0;
+  background: rgb(var(--fondo));
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 30px rgb(0 0 0 / 0.2);
+  animation: hoja-sube 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.hoja-enlace {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  min-height: 56px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1px;
+  background: rgb(var(--tarjeta));
+  font-weight: 500;
+}
+.hoja-enlace:first-of-type { border-radius: 0.875rem 0.875rem 0 0; }
+.hoja-enlace:last-child { border-radius: 0 0 0.875rem 0.875rem; margin-bottom: 0; }
+@keyframes hoja-sube {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* El menú desplegable de la barra no muestra la flechita del navegador */
+.menu-desplegable > summary::-webkit-details-marker { display: none; }
+.menu-desplegable[open] > summary svg { transform: rotate(180deg); }
+
+/* ---------- Avisos en tiempo real (banner estilo iOS) ---------- */
+#avisos {
+  position: fixed;
+  inset-inline: 0;
+  top: calc(0.75rem + env(safe-area-inset-top));
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 0.75rem;
+  pointer-events: none;
+}
+.aviso-flotante {
+  pointer-events: auto;
+  display: flex;
+  width: 100%;
+  max-width: 28rem;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 1.25rem;
+  background: rgb(var(--tarjeta) / 0.92);
+  padding: 0.75rem 0.875rem;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.22), 0 0 0 0.5px rgb(var(--separador) / 0.25);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  animation: aviso-entra 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.aviso-flotante strong { display: block; font-size: 15px; }
+.aviso-flotante p { font-size: 14px; color: rgb(var(--secundario)); overflow-wrap: anywhere; }
+.aviso-flotante-icono { font-size: 1.6rem; line-height: 1; }
+@keyframes aviso-entra {
+  from { transform: translateY(-140%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ---------- Interruptor de "compartir mi ubicación" ---------- */
+#compartir-ubicacion .punto {
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 9999px;
+  background: rgb(var(--terciario));
+}
+#compartir-ubicacion.compartiendo .punto {
+  background: rgb(var(--exito));
+  box-shadow: 0 0 0 0 rgb(var(--exito) / 0.6);
+  animation: pulso 1.8s infinite;
+}
+@keyframes pulso {
+  70% { box-shadow: 0 0 0 7px rgb(var(--exito) / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(var(--exito) / 0); }
+}
+
+/* ---------- Conductor en el mapa ---------- */
+.conductor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  border-radius: 9999px;
+  border: 2px solid #0a84ff;
+  background: #fff;
+  color: #1c1c1e;
+  padding: 0.15rem 0.6rem 0.15rem 0.3rem;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+  transform: translate(-50%, -50%);
+}
+.conductor::before {
+  content: '';
+  height: 0.7rem;
+  width: 0.7rem;
+  border-radius: 9999px;
+  background: #0a84ff;
+  box-shadow: 0 0 0 3px rgb(10 132 255 / 0.3);
+}
+.conductor.sin-senal { border-color: #8e8e93; color: #6c6c70; }
+.conductor.sin-senal::before { background: #8e8e93; box-shadow: none; }
+.yo-aqui {
+  height: 16px;
+  width: 16px;
+  border-radius: 9999px;
+  background: #0a84ff;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 6px rgb(10 132 255 / 0.28), 0 2px 6px rgb(0 0 0 / 0.4);
+}
+
+/* ---------- Fotos de entrega ---------- */
+.miniatura-foto {
+  display: block;
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 0.875rem;
+  background: rgb(var(--relleno) / 0.15);
+}
+
+
+/* ---------- Cuadro de confirmación (alerta de iOS) ---------- */
+dialog.confirmacion {
+  width: calc(100vw - 2.5rem);
+  max-width: 19rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: rgb(var(--etiqueta));
+}
+dialog.confirmacion::backdrop {
+  background: rgb(0 0 0 / 0.38);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+.confirmacion-caja {
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: rgb(var(--tarjeta) / 0.97);
+  text-align: center;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.38), 0 0 0 0.5px rgb(var(--separador) / 0.25);
+  animation: dialogo-entra 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.confirmacion-texto { padding: 1.4rem 1.25rem 1.2rem; }
+.confirmacion-texto h2 { font-size: 17px; line-height: 1.3; }
+.confirmacion-texto p { margin-top: 0.4rem; font-size: 14px; line-height: 1.4; color: rgb(var(--secundario)); }
+.confirmacion-botones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 0.5px solid rgb(var(--separador) / 0.35);
+}
+.confirmacion-botones button {
+  min-height: 48px;
+  font-size: 17px;
+  color: rgb(var(--accent));
+  transition: background-color 0.15s;
+}
+.confirmacion-botones button:active { background: rgb(var(--relleno) / 0.18); }
+.confirmacion-botones button + button { border-left: 0.5px solid rgb(var(--separador) / 0.35); font-weight: 600; }
+.confirmacion-botones button.peligro { color: rgb(var(--peligro-texto)); }
+@keyframes dialogo-entra {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ---------- Pantalla de ingreso ---------- */
+.fondo-login {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(60rem 40rem at 15% -10%, rgb(var(--accent) / 0.16), transparent 60%),
+    radial-gradient(50rem 36rem at 105% 10%, rgb(var(--indigo) / 0.16), transparent 60%),
+    radial-gradient(46rem 34rem at 40% 115%, rgb(var(--aviso) / 0.12), transparent 60%);
+}
+.fondo-login::before,
+.fondo-login::after {
+  content: '';
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.55;
+  animation: flota 16s ease-in-out infinite alternate;
+}
+.fondo-login::before {
+  top: 8%;
+  left: -8%;
+  height: 22rem;
+  width: 22rem;
+  background: rgb(var(--accent) / 0.35);
+}
+.fondo-login::after {
+  right: -10%;
+  bottom: 4%;
+  height: 26rem;
+  width: 26rem;
+  background: rgb(var(--indigo) / 0.3);
+  animation-delay: -6s;
+}
+@keyframes flota {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(3rem, -2rem, 0) scale(1.12); }
+}
+
+.tarjeta-login {
+  border-radius: 1.75rem;
+  background: rgb(var(--tarjeta) / 0.78);
+  padding: 2rem 1.5rem 1.75rem;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.12), 0 0 0 0.5px rgb(var(--separador) / 0.22);
+  backdrop-filter: blur(28px) saturate(1.7);
+  -webkit-backdrop-filter: blur(28px) saturate(1.7);
+  animation: login-entra 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+}
+@media (min-width: 640px) {
+  .tarjeta-login { padding: 2.5rem 2.25rem 2.25rem; }
+}
+@keyframes login-entra {
+  from { transform: translateY(14px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.tarjeta-login.con-error { animation: sacudir 0.45s ease-in-out; }
+@keyframes sacudir {
+  20%, 60% { transform: translateX(-7px); }
+  40%, 80% { transform: translateX(7px); }
+}
+
+.logo-login {
+  display: flex;
+  height: 4.75rem;
+  width: 4.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22%;
+  color: #fff;
+  background: linear-gradient(145deg, rgb(var(--accent)), rgb(var(--indigo)));
+  box-shadow: 0 14px 30px rgb(var(--accent) / 0.38), inset 0 1px 0 rgb(255 255 255 / 0.35);
+}
+
+.campo-login {
+  position: relative;
+}
+.campo-login > svg.icono-campo {
+  position: absolute;
+  left: 0.95rem;
+  top: 50%;
+  height: 1.25rem;
+  width: 1.25rem;
+  transform: translateY(-50%);
+  color: rgb(var(--terciario));
+  pointer-events: none;
+  transition: color 0.15s;
+}
+.campo-login:focus-within > svg.icono-campo { color: rgb(var(--accent)); }
+.campo-login input {
+  min-height: 52px;
+  padding-left: 2.9rem;
+  border-radius: 0.95rem;
+  background: rgb(var(--relleno) / 0.12);
+  border-color: transparent;
+}
+.campo-login input:focus { background: rgb(var(--tarjeta)); }
+.campo-login .ver-clave {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  transform: translateY(-50%);
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.7rem;
+  color: rgb(var(--terciario));
+}
+.campo-login .ver-clave:hover { color: rgb(var(--etiqueta)); }

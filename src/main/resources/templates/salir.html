@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina('Cerrar sesión', 'salir', ~{::contenido}, ~{})}">
+<body>
+<th:block th:fragment="contenido">
+    <div class="mx-auto mt-10 max-w-sm text-center">
+        <span class="icono-tile mx-auto !h-16 !w-16 !rounded-2xl bg-peligro">
+            <th:block th:replace="~{fragments/iconos :: salir('h-8 w-8')}"/>
+        </span>
+        <h1 class="mt-5 text-[26px]">¿Cerrar sesión?</h1>
+        <p class="mt-2 text-secundario">Tendrás que ingresar de nuevo con tu usuario y contraseña.</p>
+
+        <form method="post" th:action="@{/Salir}" class="mt-6 grid gap-3">
+            <button type="submit" class="btn btn-danger btn-lg w-full">Cerrar sesión</button>
+            <a th:href="@{/}" class="btn btn-secondary btn-lg w-full">Cancelar</a>
+        </form>
+    </div>
+</th:block>
+</body>
+</html>

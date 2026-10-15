@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: pagina('Pedidos', 'pedidos', ~{::contenido}, ~{::scripts})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1>Pedidos</h1>
+            <p class="text-sm text-secundario">Domicilios · últimos 3 meses</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a sec:authorize="hasRole('admin')" th:href="@{/Pedidos/Mapa}" class="btn btn-secondary">
+                <th:block th:replace="~{fragments/iconos :: mapa('h-4 w-4')}"/>Ver mapa
+            </a>
+            <a th:href="@{/Pedidos/Nuevo}" class="btn btn-primary">
+                <th:block th:replace="~{fragments/iconos :: mas('h-4 w-4')}"/>Nuevo pedido
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(pedidos)}" class="aviso aviso-info">
+        <p>No hay pedidos en los últimos 3 meses.</p>
+    </div>
+
+    <th:block th:unless="${#lists.isEmpty(pedidos)}">
+        <div class="mb-4 flex flex-wrap gap-3">
+            <div class="relative min-w-[16rem] flex-1">
+                <label for="filtro-texto" class="sr-only">Filtrar pedidos</label>
+                <th:block th:replace="~{fragments/iconos :: buscar('pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-secundario')}"/>
+                <input id="filtro-texto" type="search" class="input pl-11" autocomplete="off"
+                       placeholder="Filtrar por número, cliente, dirección o domiciliario"/>
+            </div>
+            <div>
+                <label for="filtro-estado" class="sr-only">Filtrar por estado</label>
+                <select id="filtro-estado" class="input">
+                    <option value="">Todos los estados</option>
+                    <option th:each="e : ${T(com.ferreteria.pedidos.domain.EstadoPedido).values()}"
+                            th:value="${e.clave}" th:text="${e.etiqueta}"></option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="tabla" id="tabla-filtrable">
+                    <caption class="sr-only">Pedidos de los últimos 3 meses</caption>
+                    <thead>
+                    <tr>
+                        <th scope="col">Orden</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Cliente</th>
+                        <th scope="col">Dirección</th>
+                        <th scope="col" sec:authorize="hasRole('admin')">Sucursal</th>
+                        <th scope="col" sec:authorize="hasRole('admin')">Vendedor</th>
+                        <th scope="col">Domiciliario</th>
+                        <th scope="col">Pago</th>
+                        <th scope="col" class="text-right">Total</th>
+                        <th scope="col" class="text-center">Estado</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${pedidos}" data-fila th:attr="data-estado=${p.estado}">
+                        <td><a class="font-bold text-accent hover:underline"
+                               th:href="@{/Pedidos/Detalle/{id}(id=${p.id})}" th:text="${p.numero}"></a></td>
+                        <td class="whitespace-nowrap" th:text="${@formato.fecha(p.fecha)}"></td>
+                        <td>
+                            <div class="font-medium" th:text="${p.cliente}"></div>
+                            <div class="text-[13px] text-secundario" th:text="${p.ferreteria}"></div>
+                        </td>
+                        <td class="max-w-[16rem]" th:text="${p.direccion}"></td>
+                        <td sec:authorize="hasRole('admin')" th:text="${p.sucursal}"></td>
+                        <td sec:authorize="hasRole('admin')" th:text="${p.vendedor}"></td>
+                        <td>
+                            <span th:if="${p.domiciliario != null}" th:text="${p.domiciliario}"></span>
+                            <span th:unless="${p.domiciliario != null}" class="text-secundario">Sin asignar</span>
+                        </td>
+                        <td class="whitespace-nowrap" th:text="${p.medioPago.etiqueta}"></td>
+                        <td class="whitespace-nowrap text-right font-semibold" th:text="${@formato.moneda(p.total)}"></td>
+                        <td class="text-center">
+                            <span class="estado" th:classappend="|estado-${p.estado}|"
+                                  th:text="${T(com.ferreteria.pedidos.domain.EstadoPedido).etiquetaDe(p.estado)}"></span>
+                        </td>
+                    </tr>
+                    <tr id="sin-resultados" hidden>
+                        <td colspan="10" class="py-10 text-center text-secundario">Ningún pedido coincide con el filtro.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/tabla-filtro.js}" defer></script>
+</th:block>
+</body>
+</html>

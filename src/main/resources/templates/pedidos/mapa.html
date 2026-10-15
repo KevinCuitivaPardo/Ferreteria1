@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina('Mapa de domicilios', 'mapa', ~{::contenido}, ~{::scripts})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+            <h1>Mapa de domicilios</h1>
+            <p class="text-secundario">
+                Dónde se generan los pedidos y dónde están los domiciliarios, en vivo.
+                <span id="conteo-pedidos" class="font-medium"></span>
+            </p>
+        </div>
+        <div>
+            <label for="filtro-estado-mapa" class="sr-only">Filtrar por estado</label>
+            <select id="filtro-estado-mapa" class="input">
+                <option value="">Todos los estados</option>
+                <option th:each="e : ${T(com.ferreteria.pedidos.domain.EstadoPedido).values()}"
+                        th:value="${e.clave}" th:text="${e.etiqueta}"></option>
+            </select>
+        </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+
+        <div class="lg:col-span-2">
+            <div id="mapa-pedidos" class="mapa mapa-grande" role="application"
+                 aria-label="Mapa con los domicilios y los domiciliarios en vivo"></div>
+
+            <ul class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[14px] text-secundario" aria-label="Leyenda">
+                <li class="flex items-center gap-2"><span class="h-3 w-3 rounded-[4px] bg-[#1c1c1e]"></span>Sucursal</li>
+                <li class="flex items-center gap-2"><span class="h-3 w-3 rounded-full bg-[#0a84ff]"></span>Domiciliario (en vivo)</li>
+                <li class="flex items-center gap-2"><span class="h-3 w-3 rounded-full bg-[#8e8e93]"></span>Pendiente</li>
+                <li class="flex items-center gap-2"><span class="h-3 w-3 rounded-full bg-[#007aff]"></span>Alistado</li>
+                <li class="flex items-center gap-2"><span class="h-3 w-3 rounded-full bg-[#ff9500]"></span>En ruta</li>
+                <li class="flex items-center gap-2"><span class="h-3 w-3 rounded-full bg-[#34c759]"></span>Entregado</li>
+                <li class="flex items-center gap-2"><span class="h-3 w-3 rounded-full bg-[#ff3b30]"></span>No entregado</li>
+            </ul>
+            <p class="ayuda">Los pedidos cuya dirección no se pudo ubicar no aparecen en el mapa; ábrelos desde la lista de pedidos.</p>
+        </div>
+
+        <aside class="space-y-6">
+
+            <!-- Domiciliarios en vivo -->
+            <section class="card card-body" aria-labelledby="titulo-conductores">
+                <div class="mb-3 flex items-center justify-between gap-2">
+                    <h2 id="titulo-conductores" class="text-[19px]">Domiciliarios</h2>
+                    <span id="estado-conexion" class="text-[13px] text-secundario">Conectando…</span>
+                </div>
+                <ul id="lista-conductores" class="space-y-1" aria-live="polite"></ul>
+                <p id="sin-conductores" class="ayuda mt-0">
+                    Ningún domiciliario está compartiendo su ubicación. Aparecen aquí cuando abren la aplicación en su teléfono.
+                </p>
+            </section>
+
+            <!-- Pedidos por asignar -->
+            <section class="card card-body" aria-labelledby="titulo-por-asignar">
+                <h2 id="titulo-por-asignar" class="mb-3 text-[19px]">
+                    Por asignar <span class="text-secundario" th:text="|(${#lists.size(porAsignar)})|"></span>
+                </h2>
+
+                <p th:if="${#lists.isEmpty(porAsignar)}" class="ayuda mt-0">Todos los pedidos tienen domiciliario.</p>
+
+                <ul class="space-y-4">
+                    <li th:each="p : ${porAsignar}" class="rounded-2xl bg-relleno/10 p-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <a th:href="@{/Pedidos/Detalle/{id}(id=${p.id})}" class="font-bold text-accent hover:underline"
+                                   th:text="${p.numero}"></a>
+                                <p class="truncate text-[15px] font-medium" th:text="${p.cliente}"></p>
+                                <p class="text-[13px] text-secundario" th:text="${p.direccion}"></p>
+                                <p class="text-[13px] text-secundario" th:text="|${p.sucursal} · ${@formato.moneda(p.total)}|"></p>
+                            </div>
+                        </div>
+
+                        <form method="post" th:action="@{/Pedidos/Detalle/{id}/domiciliario(id=${p.id})}"
+                              class="mt-3 flex gap-2" th:with="opciones=${domiciliariosPorSucursal.get(p.sucursalId)}">
+                            <input type="hidden" name="volver" value="mapa"/>
+                            <label class="sr-only" th:for="|dom-${p.id}|" th:text="|Domiciliario para ${p.numero}|"></label>
+                            <select th:id="|dom-${p.id}|" name="domiciliarioId" class="input !min-h-[38px] flex-1 text-[15px]" required>
+                                <option value="" disabled selected>Elegir…</option>
+                                <option th:each="d : ${opciones}" th:value="${d.id}" th:text="${d.nombre}"></option>
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-sm" th:disabled="${#lists.isEmpty(opciones)}">Asignar</button>
+                        </form>
+                        <p class="ayuda" th:if="${#lists.isEmpty(domiciliariosPorSucursal.get(p.sucursalId))}">
+                            Esta sucursal no tiene domiciliarios activos.
+                        </p>
+                    </li>
+                </ul>
+            </section>
+        </aside>
+    </div>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <link rel="stylesheet" th:href="@{/vendor/leaflet/leaflet.css}"/>
+    <script th:src="@{/vendor/leaflet/leaflet.js}"></script>
+    <script th:src="@{/js/mapa.js}"></script>
+    <script th:src="@{/js/pedidos-mapa.js}" defer></script>
+</th:block>
+</body>
+</html>

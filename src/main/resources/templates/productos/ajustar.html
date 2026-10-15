@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina('Ajustar inventario', 'inventario', ~{::contenido}, ~{})}">
+<body>
+<th:block th:fragment="contenido">
+    <div class="mx-auto max-w-xl">
+        <a th:href="@{/Movimientos/{id}(id=${producto.id})}" class="btn btn-ghost btn-sm mb-3 -ml-3">
+            <th:block th:replace="~{fragments/iconos :: flecha-izquierda('h-4 w-4')}"/>Movimientos</a>
+        <h1>Ajustar inventario</h1>
+        <p class="mb-5 mt-1 text-secundario">
+            <strong th:text="${producto.nombre}"></strong> <span th:text="${producto.medida}"></span> ·
+            Stock actual: <strong th:text="${producto.stock}"></strong>
+        </p>
+
+        <form method="post" th:action="@{/Ajustar/{id}(id=${producto.id})}" class="card card-body space-y-5">
+            <div>
+                <label class="label" for="nuevoStock">Stock correcto</label>
+                <input id="nuevoStock" name="nuevoStock" th:value="${nuevoStock}" type="number" min="0"
+                       class="input" required autofocus/>
+            </div>
+            <div>
+                <label class="label" for="motivo">Motivo del ajuste</label>
+                <input id="motivo" name="motivo" th:value="${motivo}" class="input"
+                       placeholder="Ej: conteo físico, producto dañado" required/>
+            </div>
+            <button type="submit" class="btn btn-primary w-full">Guardar ajuste</button>
+        </form>
+    </div>
+</th:block>
+</body>
+</html>

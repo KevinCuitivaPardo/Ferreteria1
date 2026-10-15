@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="pagina(titulo, activo, contenido, scripts)">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)"/>
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)"/>
+    <meta name="color-scheme" content="light dark"/>
+    <title th:text="${titulo} + ' · Ferretería'">Ferretería</title>
+    <link rel="icon" th:href="@{/favicon.ico}"/>
+    <link rel="stylesheet" th:href="@{/css/app.css}"/>
+    <script th:src="@{/js/app.js}" defer></script>
+    <th:block sec:authorize="isAuthenticated()">
+        <script th:src="@{/js/tiempo-real.js}" defer></script>
+        <script th:src="@{/js/avisos.js}" defer></script>
+        <script sec:authorize="hasRole('domiciliario')" th:src="@{/js/compartir-ubicacion.js}" defer></script>
+    </th:block>
+</head>
+<body class="flex min-h-screen flex-col"
+      th:with="sucursalActiva=${@contextoSucursal.activa()}"
+      th:attr="data-rol=${#authorization.expression('hasRole(''admin'')')} ? 'admin'
+                : (${#authorization.expression('hasRole(''domiciliario'')')} ? 'domiciliario'
+                : (${#authorization.expression('isAuthenticated()')} ? 'vendedor' : null))">
+
+<a href="#contenido"
+   class="sr-only rounded-xl bg-tarjeta px-4 py-2 font-semibold text-accent focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50">
+    Ir al contenido
+</a>
+
+<!-- ============ Barra superior (translúcida) ============ -->
+<header class="barra no-imprimir sticky top-0 z-30" sec:authorize="isAuthenticated()">
+    <div class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
+
+        <div class="flex min-w-0 items-center gap-5">
+            <a th:href="@{/}" class="flex shrink-0 items-center gap-2.5 font-semibold tracking-tight">
+                <span class="icono-tile !h-8 !w-8 !rounded-lg bg-accent">
+                    <th:block th:replace="~{fragments/iconos :: caja('h-[18px] w-[18px]')}"/>
+                </span>
+                <span class="hidden text-[17px] sm:inline">Ferretería</span>
+            </a>
+
+            <!-- Navegación de escritorio -->
+            <nav aria-label="Navegación principal" class="hidden items-center gap-0.5 md:flex">
+                <a class="nav-enlace" th:href="@{/}" th:attr="aria-current=${activo == 'inicio'} ? 'page'">Inicio</a>
+
+                <th:block sec:authorize="hasAnyRole('admin','vendedor')">
+                    <a class="nav-enlace" th:href="@{/Ventas}" th:attr="aria-current=${activo == 'ventas'} ? 'page'">Ventas</a>
+                    <a class="nav-enlace" th:href="@{/Pedidos/Lista}" th:attr="aria-current=${activo == 'pedidos'} ? 'page'">Pedidos</a>
+                </th:block>
+                <a sec:authorize="hasRole('admin')" class="nav-enlace" th:href="@{/Pedidos/Mapa}"
+                   th:attr="aria-current=${activo == 'mapa'} ? 'page'">Mapa</a>
+                <a sec:authorize="hasAnyRole('admin','vendedor')" class="nav-enlace" th:href="@{/Productos}"
+                   th:attr="aria-current=${activo == 'inventario'} ? 'page'">Inventario</a>
+
+                <a sec:authorize="hasRole('domiciliario')" class="nav-enlace" th:href="@{/Entregas}"
+                   th:attr="aria-current=${activo == 'entregas'} ? 'page'">Mis entregas</a>
+
+                <details sec:authorize="hasRole('admin')" class="menu-desplegable relative">
+                    <summary class="nav-enlace cursor-pointer list-none"
+                             th:classappend="${#lists.contains({'sucursales','usuarios','descuentos','eventos'}, activo)} ? 'bg-relleno/15 text-accent'">
+                        Administración
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                    </summary>
+                    <div class="absolute left-0 top-full mt-2 w-52 overflow-hidden rounded-2xl bg-tarjeta p-1.5 shadow-elevada">
+                        <a class="nav-enlace w-full" th:href="@{/Sucursales}" th:attr="aria-current=${activo == 'sucursales'} ? 'page'">Sucursales</a>
+                        <a class="nav-enlace w-full" th:href="@{/Usuarios}" th:attr="aria-current=${activo == 'usuarios'} ? 'page'">Usuarios</a>
+                        <a class="nav-enlace w-full" th:href="@{/Descuentos}" th:attr="aria-current=${activo == 'descuentos'} ? 'page'">Descuentos</a>
+                        <a class="nav-enlace w-full" th:href="@{/Eventos}" th:attr="aria-current=${activo == 'eventos'} ? 'page'">Registro de eventos</a>
+                    </div>
+                </details>
+            </nav>
+        </div>
+
+        <div class="flex min-w-0 items-center gap-2 sm:gap-3">
+            <!-- El administrador elige en qué sucursal trabaja; los demás ven la suya -->
+            <form sec:authorize="hasRole('admin')" method="post" th:action="@{/Sucursales/activa}"
+                  class="flex min-w-0 items-center gap-1.5" th:if="${sucursalActiva != null}">
+                <label for="sucursal-activa" class="sr-only">Sucursal en la que trabajas</label>
+                <th:block th:replace="~{fragments/iconos :: tienda('h-4 w-4 shrink-0 text-secundario')}"/>
+                <select id="sucursal-activa" name="id" data-autosubmit
+                        class="min-h-[34px] max-w-[9.5rem] truncate rounded-ios border-0 bg-relleno/15 py-0 pl-3 pr-8 text-[14px] font-medium focus:ring-4 focus:ring-accent/25 sm:max-w-[14rem]">
+                    <option th:each="s : ${@contextoSucursal.activas()}" th:value="${s.id}" th:text="${s.nombre}"
+                            th:selected="${s.id == sucursalActiva.id}"></option>
+                </select>
+            </form>
+            <span sec:authorize="!hasRole('admin')" th:if="${sucursalActiva != null}"
+                  class="inline-flex min-h-[34px] max-w-[10rem] items-center gap-1.5 truncate rounded-ios bg-relleno/15 px-3 text-[14px] font-medium">
+                <th:block th:replace="~{fragments/iconos :: tienda('h-4 w-4 shrink-0 text-secundario')}"/>
+                <span class="truncate" th:text="${sucursalActiva.nombre}"></span>
+            </span>
+
+            <!-- Activa las notificaciones del navegador (solo si todavía no se ha decidido) -->
+            <button type="button" id="activar-avisos" hidden class="btn btn-ghost btn-sm" title="Activar avisos del navegador">
+                <th:block th:replace="~{fragments/iconos :: campana('h-5 w-5')}"/><span class="hidden sm:inline">Activar avisos</span>
+            </button>
+            <!-- El domiciliario comparte su ubicación mientras trabaja -->
+            <button sec:authorize="hasRole('domiciliario')" type="button" id="compartir-ubicacion" aria-pressed="false"
+                    class="inline-flex min-h-[34px] items-center gap-2 rounded-ios bg-relleno/15 px-3 text-[13px] font-medium">
+                <span class="punto"></span><span data-estado>Ubicación apagada</span>
+            </button>
+
+            <span class="hidden text-[15px] text-secundario lg:inline">
+                <span class="font-medium text-etiqueta" sec:authentication="name">usuario</span>
+            </span>
+            <!-- Cerrar sesión pide confirmación antes de salir -->
+            <form method="post" th:action="@{/Salir}" data-confirmar-titulo="¿Cerrar sesión?"
+                  data-confirmar-boton="Cerrar sesión" data-confirmar-peligro
+                  th:attr="data-confirmar=${#authorization.expression('hasRole(''domiciliario'')')}
+                      ? 'Dejarás de compartir tu ubicación y de recibir alertas de pedidos nuevos.'
+                      : 'Tendrás que ingresar de nuevo con tu usuario y contraseña.'">
+                <button type="submit" class="btn btn-secondary btn-sm" aria-label="Cerrar sesión">
+                    <th:block th:replace="~{fragments/iconos :: salir('h-4 w-4')}"/><span class="hidden sm:inline">Salir</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</header>
+
+<!-- ============ Contenido ============ -->
+<div id="avisos" aria-live="polite" class="no-imprimir"></div>
+
+<main id="contenido" class="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-6 sm:pt-8 md:pb-10">
+
+    <div th:if="${mensaje}" class="aviso aviso-exito no-imprimir" role="status">
+        <th:block th:replace="~{fragments/iconos :: circulo-check('mt-0.5 h-5 w-5 shrink-0')}"/>
+        <p th:text="${mensaje}"></p>
+    </div>
+    <div th:if="${error}" class="aviso aviso-error no-imprimir" role="alert">
+        <th:block th:replace="~{fragments/iconos :: alerta('mt-0.5 h-5 w-5 shrink-0')}"/>
+        <p th:text="${error}"></p>
+    </div>
+
+    <th:block th:insert="${contenido}"></th:block>
+</main>
+
+<!-- ============ Barra de pestañas (móvil) ============ -->
+<nav class="tab-barra no-imprimir md:hidden" aria-label="Navegación principal" sec:authorize="isAuthenticated()">
+    <a class="tab" th:href="@{/}" th:attr="aria-current=${activo == 'inicio'} ? 'page'">
+        <th:block th:replace="~{fragments/iconos :: inicio('h-6 w-6')}"/>Inicio</a>
+
+    <th:block sec:authorize="hasAnyRole('admin','vendedor')">
+        <a class="tab" th:href="@{/Ventas}" th:attr="aria-current=${activo == 'ventas'} ? 'page'">
+            <th:block th:replace="~{fragments/iconos :: carrito('h-6 w-6')}"/>Ventas</a>
+        <a class="tab" th:href="@{/Pedidos/Lista}" th:attr="aria-current=${activo == 'pedidos'} ? 'page'">
+            <th:block th:replace="~{fragments/iconos :: recibo('h-6 w-6')}"/>Pedidos</a>
+        <a class="tab" th:href="@{/Productos}" th:attr="aria-current=${activo == 'inventario'} ? 'page'">
+            <th:block th:replace="~{fragments/iconos :: caja('h-6 w-6')}"/>Inventario</a>
+    </th:block>
+
+    <a sec:authorize="hasRole('domiciliario')" class="tab" th:href="@{/Entregas}"
+       th:attr="aria-current=${activo == 'entregas'} ? 'page'">
+        <th:block th:replace="~{fragments/iconos :: moto('h-6 w-6')}"/>Entregas</a>
+
+    <button sec:authorize="hasRole('admin')" type="button" class="tab" data-abrir-hoja="hoja-mas"
+            th:attr="aria-current=${#lists.contains({'mapa','sucursales','usuarios','descuentos','eventos'}, activo)} ? 'page'">
+        <th:block th:replace="~{fragments/iconos :: ellipsis('h-6 w-6')}"/>Más</button>
+</nav>
+
+<!-- Hoja inferior con el resto de opciones del administrador (móvil) -->
+<div id="hoja-mas" class="hoja no-imprimir md:hidden" hidden sec:authorize="hasRole('admin')">
+    <div class="hoja-fondo" data-cerrar-hoja></div>
+    <div class="hoja-panel" role="dialog" aria-label="Más opciones">
+        <div class="mb-2 flex items-center justify-between px-2">
+            <h2 class="text-[17px]">Más opciones</h2>
+            <button type="button" class="btn btn-ghost btn-sm" data-cerrar-hoja>Cerrar</button>
+        </div>
+        <a class="hoja-enlace" th:href="@{/Pedidos/Mapa}">
+            <span class="icono-tile bg-aviso"><th:block th:replace="~{fragments/iconos :: mapa('h-5 w-5')}"/></span>Mapa de domicilios</a>
+        <a class="hoja-enlace" th:href="@{/Sucursales}">
+            <span class="icono-tile bg-exito"><th:block th:replace="~{fragments/iconos :: tienda('h-5 w-5')}"/></span>Sucursales</a>
+        <a class="hoja-enlace" th:href="@{/Usuarios}">
+            <span class="icono-tile bg-indigo"><th:block th:replace="~{fragments/iconos :: usuarios('h-5 w-5')}"/></span>Usuarios</a>
+        <a class="hoja-enlace" th:href="@{/Descuentos}">
+            <span class="icono-tile bg-morado"><th:block th:replace="~{fragments/iconos :: porcentaje('h-5 w-5')}"/></span>Descuentos</a>
+        <a class="hoja-enlace" th:href="@{/Eventos}">
+            <span class="icono-tile bg-turquesa"><th:block th:replace="~{fragments/iconos :: historial('h-5 w-5')}"/></span>Registro de eventos</a>
+    </div>
+</div>
+
+<!-- Cuadro de confirmación reutilizable (lo abre app.js para los formularios con data-confirmar) -->
+<dialog id="dialogo-confirmar" class="confirmacion" aria-labelledby="confirmar-titulo" aria-describedby="confirmar-mensaje">
+    <form method="dialog" class="confirmacion-caja">
+        <div class="confirmacion-texto">
+            <h2 id="confirmar-titulo">¿Estás seguro?</h2>
+            <p id="confirmar-mensaje"></p>
+        </div>
+        <div class="confirmacion-botones">
+            <button type="submit" id="confirmar-cancelar" value="cancelar">Cancelar</button>
+            <button type="submit" id="confirmar-aceptar" value="aceptar">Aceptar</button>
+        </div>
+    </form>
+</dialog>
+
+<th:block th:insert="${scripts}"></th:block>
+
+</body>
+</html>

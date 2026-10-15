@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina(|Entrega ${pedido.numero}|, 'entregas', ~{::contenido}, ~{::scripts})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <a th:href="@{/Entregas}" class="btn btn-ghost btn-sm mb-3 -ml-3">
+        <th:block th:replace="~{fragments/iconos :: flecha-izquierda('h-4 w-4')}"/>Mis entregas</a>
+
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <p class="text-[13px] font-semibold text-secundario" th:text="${pedido.numero}"></p>
+            <h1 th:text="${pedido.cliente}">Cliente</h1>
+        </div>
+        <span class="estado text-sm" th:classappend="|estado-${pedido.estado}|"
+              th:text="${T(com.ferreteria.pedidos.domain.EstadoPedido).etiquetaDe(pedido.estado)}"></span>
+    </div>
+
+    <!-- ===== Qué hacer ahora ===== -->
+    <section th:if="${puedeComenzar}" class="card card-body mb-6" aria-labelledby="titulo-comenzar">
+        <h2 id="titulo-comenzar" class="mb-1 text-[19px]">¿Listo para salir?</h2>
+        <p class="mb-4 text-secundario">Al comenzar, el pedido pasa a "En ruta" y el administrador te ve en el mapa.</p>
+        <form method="post" th:action="@{/Entregas/{id}/comenzar(id=${pedido.id})}">
+            <button type="submit" class="btn btn-primary btn-lg w-full sm:w-auto">
+                <th:block th:replace="~{fragments/iconos :: play('h-5 w-5')}"/>Comenzar entrega
+            </button>
+        </form>
+    </section>
+    <div th:if="${otraEnRuta}" class="aviso aviso-info">
+        <th:block th:replace="~{fragments/iconos :: alerta('mt-0.5 h-5 w-5 shrink-0')}"/>
+        <p>Ya llevas otra entrega en ruta. Termínala para poder comenzar esta.</p>
+    </div>
+
+    <div class="mb-6 grid gap-6 lg:grid-cols-5">
+        <!-- Mapa con la ruta -->
+        <section class="card card-body lg:col-span-3" aria-labelledby="titulo-ruta">
+            <h2 id="titulo-ruta" class="mb-1 text-[19px]">Ruta de entrega</h2>
+            <p id="resumen-ruta" class="ayuda mb-3 mt-0" role="status" aria-live="polite">Calculando la ruta...</p>
+            <div id="mapa-pedido" class="mapa" role="application" aria-label="Mapa con la ruta de entrega"
+                 data-modo="conductor"
+                 th:attr="data-lat=${pedido.latitud},data-lng=${pedido.longitud},
+                          data-origen-lat=${pedido.sucursalLatitud},data-origen-lng=${pedido.sucursalLongitud},
+                          data-sucursal=${pedido.sucursal},data-estado=${pedido.estado},
+                          data-cliente=${pedido.cliente},data-direccion=${pedido.direccion}"></div>
+            <p class="ayuda" th:if="${!pedido.tieneUbicacion()}">
+                Esta dirección no se pudo ubicar en el mapa. Guíate por el texto de la dirección o llama al cliente.
+            </p>
+        </section>
+
+        <section class="card card-body lg:col-span-2" aria-labelledby="titulo-destino">
+            <h2 id="titulo-destino" class="mb-4 text-[19px]">A quién y dónde</h2>
+            <dl class="space-y-3 text-[15px]">
+                <div>
+                    <dt class="text-[13px] font-semibold text-secundario">Hizo el pedido</dt>
+                    <dd class="text-[17px] font-semibold" th:text="${pedido.cliente}"></dd>
+                    <dd th:if="${!#strings.isEmpty(pedido.ferreteria)}" th:text="${pedido.ferreteria}"></dd>
+                </div>
+                <div>
+                    <dt class="text-[13px] font-semibold text-secundario">Dirección</dt>
+                    <dd class="text-[17px]" th:text="${pedido.direccion}"></dd>
+                    <dd th:if="${!#strings.isEmpty(pedido.ubicacion)}" class="text-secundario" th:text="${pedido.ubicacion}"></dd>
+                </div>
+                <div th:if="${!#strings.isEmpty(pedido.horario)}">
+                    <dt class="text-[13px] font-semibold text-secundario">Horario</dt>
+                    <dd th:text="${pedido.horario}"></dd>
+                </div>
+                <div>
+                    <dt class="text-[13px] font-semibold text-secundario">Teléfono</dt>
+                    <dd class="flex flex-wrap gap-2">
+                        <a class="btn btn-secondary btn-sm" th:href="|tel:${pedido.celular1}|"
+                           th:text="${pedido.celular1}"></a>
+                        <a th:unless="${#strings.isEmpty(pedido.celular2)}" class="btn btn-secondary btn-sm"
+                           th:href="|tel:${pedido.celular2}|" th:text="${pedido.celular2}"></a>
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-[13px] font-semibold text-secundario">Sale de</dt>
+                    <dd th:text="${pedido.sucursal}"></dd>
+                </div>
+            </dl>
+        </section>
+    </div>
+
+    <!-- ===== Cobro ===== -->
+    <section class="card card-body mb-6" aria-labelledby="titulo-cobro">
+        <h2 id="titulo-cobro" class="mb-3 text-[19px]">Pago</h2>
+        <div th:if="${pedido.seCobraAlEntregar()}" class="flex flex-wrap items-center gap-4">
+            <span class="icono-tile bg-exito"><th:block th:replace="~{fragments/iconos :: billete('h-6 w-6')}"/></span>
+            <div>
+                <p class="text-[13px] font-semibold text-secundario">Cobra en efectivo</p>
+                <p class="text-[28px] font-bold leading-tight text-accent" th:text="${@formato.moneda(pedido.total)}"></p>
+                <p class="text-[15px]" th:if="${pedido.montoRecibido != null}">
+                    Paga con <strong th:text="${@formato.moneda(pedido.montoRecibido)}"></strong> ·
+                    lleva <strong th:text="${@formato.moneda(pedido.cambio())}"></strong> de cambio
+                </p>
+            </div>
+        </div>
+        <div th:unless="${pedido.seCobraAlEntregar()}" class="flex items-center gap-4">
+            <span class="icono-tile bg-accent"><th:block th:replace="~{fragments/iconos :: circulo-check('h-6 w-6')}"/></span>
+            <div>
+                <p class="font-semibold">Ya está pagado: no cobres nada</p>
+                <p class="text-[15px] text-secundario">
+                    Medio de pago: <span th:text="${pedido.medioPago.etiqueta}"></span> ·
+                    total <span th:text="${@formato.moneda(pedido.total)}"></span>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Qué entregar ===== -->
+    <section class="mb-6" aria-labelledby="titulo-productos">
+        <h2 id="titulo-productos" class="mb-3 text-[19px]">Qué entregar</h2>
+        <div class="card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="tabla">
+                    <caption class="sr-only" th:text="|Productos del pedido ${pedido.numero}|"></caption>
+                    <thead>
+                    <tr>
+                        <th scope="col">Código</th>
+                        <th scope="col">Producto</th>
+                        <th scope="col">Medida</th>
+                        <th scope="col" class="text-right">Cantidad</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item : ${detalle.items}">
+                        <td class="font-mono text-xs font-semibold" th:text="${item.codigo}"></td>
+                        <td th:text="${item.nombre}"></td>
+                        <td th:text="${item.medida}"></td>
+                        <td class="text-right text-[17px] font-bold" th:text="${item.cantidad}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Terminar la entrega ===== -->
+    <section th:if="${enRuta}" class="card card-body" aria-labelledby="titulo-terminar">
+        <h2 id="titulo-terminar" class="mb-4 text-[19px]">Terminar la entrega</h2>
+
+        <form id="form-terminar" method="post" enctype="multipart/form-data"
+              th:action="@{/Entregas/{id}/terminar(id=${pedido.id}, _csrf=${_csrf.token})}" class="space-y-5">
+
+            <div>
+                <span class="label" id="etiqueta-resultado">¿Qué pasó?</span>
+                <div class="segmentado" role="radiogroup" aria-labelledby="etiqueta-resultado">
+                    <label>
+                        <input type="radio" name="resultado" value="entregado" checked/>
+                        <span>Entregado</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="resultado" value="no_entregado"/>
+                        <span>No se pudo entregar</span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label for="foto" class="label">
+                    Foto de la entrega <span id="foto-obligatoria" class="text-peligro-texto">*</span>
+                </label>
+                <input id="foto" name="foto" type="file" accept="image/*" capture="environment"
+                       class="block w-full text-[15px] file:mr-3 file:rounded-xl file:border-0 file:bg-accent/15 file:px-4 file:py-2.5 file:font-semibold file:text-accent"/>
+                <p class="ayuda" id="ayuda-foto">Toma una foto del pedido entregado (o del recibo). El administrador la revisa.</p>
+                <img id="vista-foto" class="miniatura-foto mt-3 max-w-xs" alt="Vista previa de la foto" hidden/>
+            </div>
+
+            <div>
+                <label for="nota" class="label">
+                    Nota <span id="nota-obligatoria" class="text-peligro-texto" hidden>*</span>
+                </label>
+                <textarea id="nota" name="nota" rows="2" maxlength="500" class="input"
+                          placeholder="Ej: lo recibió el encargado / nadie atendió la puerta"></textarea>
+            </div>
+
+            <p id="error-terminar" class="text-[15px] font-medium text-peligro-texto" role="alert" hidden></p>
+
+            <button type="submit" id="boton-terminar" class="btn btn-primary btn-lg w-full sm:w-auto">
+                <th:block th:replace="~{fragments/iconos :: bandera('h-5 w-5')}"/>Terminar entrega
+            </button>
+        </form>
+    </section>
+
+    <!-- ===== Entrega cerrada ===== -->
+    <section th:if="${cerrada}" class="card card-body" aria-labelledby="titulo-cerrada">
+        <h2 id="titulo-cerrada" class="mb-3 text-[19px]">Entrega cerrada</h2>
+        <p class="text-[15px]" th:if="${!#strings.isEmpty(pedido.notaEntrega)}">
+            <span class="font-semibold text-secundario">Tu nota:</span> <span th:text="${pedido.notaEntrega}"></span>
+        </p>
+        <div th:if="${!#lists.isEmpty(detalle.fotos)}" class="mt-4 grid gap-4 sm:grid-cols-2">
+            <a th:each="f : ${detalle.fotos}" th:href="@{/Fotos/{pedido}/{foto}(pedido=${pedido.id}, foto=${f.id})}"
+               target="_blank" rel="noopener">
+                <img class="miniatura-foto" loading="lazy" alt="Foto de la entrega"
+                     th:src="@{/Fotos/{pedido}/{foto}(pedido=${pedido.id}, foto=${f.id})}"/>
+            </a>
+        </div>
+    </section>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <link rel="stylesheet" th:href="@{/vendor/leaflet/leaflet.css}"/>
+    <script th:src="@{/vendor/leaflet/leaflet.js}"></script>
+    <script th:src="@{/js/mapa.js}"></script>
+    <script th:src="@{/js/pedido-ruta.js}"></script>
+    <script th:src="@{/js/foto-entrega.js}" defer></script>
+</th:block>
+</body>
+</html>

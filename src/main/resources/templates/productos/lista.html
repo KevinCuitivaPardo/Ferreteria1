@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: pagina('Inventario', 'inventario', ~{::contenido}, ~{::scripts})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1>Inventario de tornillería</h1>
+            <p class="text-sm text-secundario">
+                <span th:text="${#lists.size(lista)}">0</span> productos ·
+                existencias de <strong th:text="${@contextoSucursal.activa()?.nombre}">la sucursal</strong>
+            </p>
+        </div>
+        <a sec:authorize="hasRole('admin')" th:href="@{/Nuevo}" class="btn btn-primary">
+            <th:block th:replace="~{fragments/iconos :: mas('h-4 w-4')}"/>Nuevo producto
+        </a>
+    </div>
+
+    <div class="relative mb-6 max-w-2xl" id="buscador"
+         th:attr="data-admin=${#authorization.expression('hasRole(''admin'')')}">
+        <label for="buscar" class="sr-only">Buscar producto</label>
+        <th:block th:replace="~{fragments/iconos :: buscar('pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-secundario')}"/>
+        <input type="search" id="buscar" class="input pl-11"
+               placeholder="Buscar por código, medida o nombre (ej: DW-8 o 8 x 2)" autocomplete="off"/>
+        <ul id="sugerencias" class="sugerencias" hidden></ul>
+    </div>
+
+    <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="tabla">
+                <caption class="sr-only">Productos del inventario</caption>
+                <thead>
+                <tr>
+                    <th scope="col">Código</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Medida</th>
+                    <th scope="col" class="text-right">Compra x100</th>
+                    <th scope="col" class="text-right">Venta x100</th>
+                    <th scope="col" class="text-right">Stock</th>
+                    <th scope="col" class="text-right">Mínimo</th>
+                    <th scope="col"><span class="sr-only">Acciones</span></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${lista}" th:classappend="${p.stockBajo()} ? 'fila-alerta'">
+                    <td class="font-mono text-xs font-semibold" th:text="${p.codigo}"></td>
+                    <td th:text="${p.nombre}"></td>
+                    <td th:text="${p.medida}"></td>
+                    <td class="whitespace-nowrap text-right" th:text="${@formato.moneda(p.precioCompra)}"></td>
+                    <td class="whitespace-nowrap text-right" th:text="${@formato.moneda(p.precioVenta)}"></td>
+                    <td class="whitespace-nowrap text-right">
+                        <span th:text="${p.stock}"></span>
+                        <span th:if="${p.stockBajo()}"
+                              class="ml-2 rounded-full bg-peligro px-2 py-0.5 text-xs font-bold text-white">BAJO</span>
+                    </td>
+                    <td class="text-right" th:text="${p.stockMinimo}"></td>
+                    <td class="whitespace-nowrap text-right">
+                        <div class="flex justify-end gap-2">
+                            <a th:href="@{/Movimientos/{id}(id=${p.id})}" class="btn btn-secondary btn-sm">Movimientos</a>
+                            <th:block sec:authorize="hasRole('admin')">
+                                <a th:href="@{/Editar/{id}(id=${p.id})}" class="btn btn-secondary btn-sm">Editar</a>
+                                <form method="post" th:action="@{/Productos/{id}/eliminar(id=${p.id})}"
+                                      data-confirmar="El producto se borra del catálogo. Si tiene movimientos de inventario no se podrá eliminar."
+                                      data-confirmar-titulo="¿Eliminar este producto?" data-confirmar-boton="Eliminar" data-confirmar-peligro>
+                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                </form>
+                            </th:block>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(lista)}">
+                    <td colspan="8" class="py-12 text-center text-secundario">Todavía no hay productos.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/inventario.js}" defer></script>
+</th:block>
+</body>
+</html>

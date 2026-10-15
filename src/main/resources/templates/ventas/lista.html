@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: pagina('Ventas', 'ventas', ~{::contenido}, ~{::scripts})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h1>Ventas</h1>
+            <p class="text-sm text-secundario">En el local · últimos 3 meses</p>
+        </div>
+        <a th:href="@{/Ventas/Nueva}" class="btn btn-primary">
+            <th:block th:replace="~{fragments/iconos :: mas('h-4 w-4')}"/>Nueva venta
+        </a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(ventas)}" class="aviso aviso-info">
+        <p>No hay ventas en los últimos 3 meses.</p>
+    </div>
+
+    <th:block th:unless="${#lists.isEmpty(ventas)}">
+        <div class="relative mb-4 max-w-md">
+            <label for="filtro-texto" class="sr-only">Filtrar ventas</label>
+            <th:block th:replace="~{fragments/iconos :: buscar('pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-secundario')}"/>
+            <input id="filtro-texto" type="search" class="input pl-11" autocomplete="off"
+                   placeholder="Filtrar por número, cliente o teléfono"/>
+        </div>
+
+        <div class="card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="tabla" id="tabla-filtrable">
+                    <caption class="sr-only">Ventas de los últimos 3 meses</caption>
+                    <thead>
+                    <tr>
+                        <th scope="col">Venta</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Cliente</th>
+                        <th scope="col">Teléfono</th>
+                        <th scope="col" sec:authorize="hasRole('admin')">Sucursal</th>
+                        <th scope="col" sec:authorize="hasRole('admin')">Vendedor</th>
+                        <th scope="col">Pago</th>
+                        <th scope="col" class="text-right">Total</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="v : ${ventas}" data-fila>
+                        <td><a class="font-bold text-accent hover:underline"
+                               th:href="@{/Ventas/{id}(id=${v.id})}" th:text="${v.numero}"></a></td>
+                        <td class="whitespace-nowrap" th:text="${@formato.fecha(v.fecha)}"></td>
+                        <td th:text="${v.cliente}"></td>
+                        <td class="whitespace-nowrap" th:text="${v.telefono}"></td>
+                        <td sec:authorize="hasRole('admin')" th:text="${v.sucursal}"></td>
+                        <td sec:authorize="hasRole('admin')" th:text="${v.vendedor}"></td>
+                        <td class="whitespace-nowrap" th:text="${v.medioPago.etiqueta}"></td>
+                        <td class="whitespace-nowrap text-right font-semibold" th:text="${@formato.moneda(v.total)}"></td>
+                    </tr>
+                    <tr id="sin-resultados" hidden>
+                        <td colspan="8" class="py-10 text-center text-secundario">Ninguna venta coincide con el filtro.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </th:block>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <script th:src="@{/js/tabla-filtro.js}" defer></script>
+</th:block>
+</body>
+</html>

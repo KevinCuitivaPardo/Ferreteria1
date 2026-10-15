@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina(${titulo}, 'sucursales', ~{::contenido}, ~{::scripts})}">
+<body>
+<th:block th:fragment="contenido">
+    <div class="mx-auto max-w-3xl">
+        <a th:href="@{/Sucursales}" class="btn btn-ghost btn-sm mb-3 -ml-3">
+            <th:block th:replace="~{fragments/iconos :: flecha-izquierda('h-4 w-4')}"/>Sucursales</a>
+        <h1 class="mb-5" th:text="${titulo}">Nueva sucursal</h1>
+
+        <form method="post" th:action="@{${accion}}" th:object="${sucursal}" class="space-y-6">
+
+            <section class="card card-body" aria-labelledby="titulo-datos">
+                <h2 id="titulo-datos" class="mb-4 text-[19px]">Datos</h2>
+                <div class="grid gap-5 md:grid-cols-2">
+                    <div>
+                        <label class="label" for="nombre">Nombre</label>
+                        <input id="nombre" th:field="*{nombre}" class="input" placeholder="Ej: Sucursal Norte"
+                               required autofocus/>
+                    </div>
+                    <div>
+                        <label class="label" for="direccion">Dirección</label>
+                        <input id="direccion" th:field="*{direccion}" class="input"
+                               placeholder="Ej: Calle 100 # 15-20, Bogotá" required/>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card card-body" aria-labelledby="titulo-mapa">
+                <h2 id="titulo-mapa" class="mb-1 text-[19px]">Ubicación en el mapa</h2>
+                <p class="ayuda mb-4 mt-0">
+                    Busca la dirección o toca el mapa para marcar el punto exacto. Desde aquí saldrán las rutas
+                    de los domicilios.
+                </p>
+
+                <button type="button" id="buscar-direccion" class="btn btn-secondary btn-sm mb-3">
+                    <th:block th:replace="~{fragments/iconos :: buscar('h-4 w-4')}"/>Buscar la dirección en el mapa
+                </button>
+
+                <div id="mapa-sucursal" class="mapa" role="application"
+                     aria-label="Mapa para marcar la ubicación de la sucursal"></div>
+                <p id="estado-mapa" class="ayuda" role="status" aria-live="polite">Todavía no hay un punto marcado.</p>
+
+                <input type="hidden" id="latitud" th:field="*{latitud}"/>
+                <input type="hidden" id="longitud" th:field="*{longitud}"/>
+            </section>
+
+            <div class="flex flex-wrap gap-3">
+                <button type="submit" class="btn btn-primary btn-lg">Guardar sucursal</button>
+                <a th:href="@{/Sucursales}" class="btn btn-secondary btn-lg">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</th:block>
+
+<th:block th:fragment="scripts">
+    <link rel="stylesheet" th:href="@{/vendor/leaflet/leaflet.css}"/>
+    <script th:src="@{/vendor/leaflet/leaflet.js}"></script>
+    <script th:src="@{/js/mapa.js}"></script>
+    <script th:src="@{/js/sucursal-formulario.js}"></script>
+</th:block>
+</body>
+</html>

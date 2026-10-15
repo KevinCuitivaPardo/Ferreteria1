@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina('Nuevo producto', 'inventario', ~{::contenido}, ~{})}">
+<body>
+<th:block th:fragment="contenido">
+    <div class="mx-auto max-w-2xl">
+        <a th:href="@{/Productos}" class="btn btn-ghost btn-sm mb-3 -ml-3">
+            <th:block th:replace="~{fragments/iconos :: flecha-izquierda('h-4 w-4')}"/>Inventario</a>
+        <h1 class="mb-5">Nuevo producto</h1>
+
+        <form method="post" th:action="@{/Nuevo}" th:object="${producto}" class="card card-body">
+            <div class="grid gap-5 sm:grid-cols-6">
+                <div class="sm:col-span-2">
+                    <label class="label" for="codigo">Código</label>
+                    <input id="codigo" th:field="*{codigo}" class="input" required autofocus/>
+                </div>
+                <div class="sm:col-span-4">
+                    <label class="label" for="nombre">Nombre</label>
+                    <input id="nombre" th:field="*{nombre}" class="input" required/>
+                </div>
+                <div class="sm:col-span-3">
+                    <label class="label" for="medida">Medida</label>
+                    <input id="medida" th:field="*{medida}" class="input"/>
+                </div>
+                <div class="sm:col-span-3">
+                    <label class="label" for="precioCompra">Precio de compra (x100 und)</label>
+                    <input id="precioCompra" th:field="*{precioCompra}" type="number" step="0.01" min="0" class="input"/>
+                    <p class="ayuda">El precio de venta se calcula solo (compra × 2).</p>
+                </div>
+                <div class="sm:col-span-3">
+                    <label class="label" for="stock">Stock inicial</label>
+                    <input id="stock" th:field="*{stock}" type="number" min="0" class="input"/>
+                </div>
+                <div class="sm:col-span-3">
+                    <label class="label" for="stockMinimo">Stock mínimo</label>
+                    <input id="stockMinimo" th:field="*{stockMinimo}" type="number" min="0" class="input"/>
+                    <p class="ayuda">Se avisa cuando el stock llega a este número.</p>
+                </div>
+            </div>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <button type="submit" class="btn btn-primary">Guardar producto</button>
+                <a th:href="@{/Productos}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</th:block>
+</body>
+</html>

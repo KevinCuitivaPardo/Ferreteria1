@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina('Mis entregas', 'entregas', ~{::contenido}, ~{})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <header class="mb-6">
+        <h1>Mis entregas</h1>
+        <p class="text-secundario">Tu cola de pedidos: comienza uno por uno, en orden. Los nuevos te llegan como alerta.</p>
+    </header>
+
+    <div th:if="${enRuta == null and #lists.isEmpty(enEspera) and #lists.isEmpty(cerradas)}" class="aviso aviso-info">
+        <th:block th:replace="~{fragments/iconos :: moto('mt-0.5 h-5 w-5 shrink-0')}"/>
+        <p>No tienes pedidos asignados. Cuando el administrador te asigne uno, te llegará una alerta aquí.</p>
+    </div>
+
+    <!--/* ============ En ruta ahora ============ */-->
+    <section th:if="${enRuta != null}" class="mb-8" aria-labelledby="titulo-ruta">
+        <h2 id="titulo-ruta" class="mb-3 text-[19px]">En ruta ahora</h2>
+        <a th:href="@{/Entregas/{id}(id=${enRuta.id})}" class="card-enlace !border-0 ring-2 ring-accent">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-[13px] font-semibold text-secundario" th:text="${enRuta.numero}"></p>
+                    <h3 class="text-[21px]" th:text="${enRuta.cliente}"></h3>
+                </div>
+                <span class="estado estado-en_ruta">En ruta</span>
+            </div>
+            <p class="mt-3 flex items-start gap-2 text-[16px]">
+                <th:block th:replace="~{fragments/iconos :: ubicacion('mt-0.5 h-5 w-5 shrink-0 text-accent')}"/>
+                <span th:text="${enRuta.direccion}"></span>
+            </p>
+            <p class="mt-3 text-[15px] text-secundario">
+                <span th:if="${enRuta.medioPago.name() == 'EFECTIVO'}" class="font-semibold text-etiqueta">
+                    Cobrar <span th:text="${@formato.moneda(enRuta.total)}"></span> en efectivo</span>
+                <span th:unless="${enRuta.medioPago.name() == 'EFECTIVO'}">
+                    Pago por <span th:text="${enRuta.medioPago.etiqueta.toLowerCase()}"></span> · no se cobra</span>
+            </p>
+            <p class="mt-4 inline-flex items-center gap-2 font-semibold text-accent">
+                Ver ruta y terminar
+                <th:block th:replace="~{fragments/iconos :: bandera('h-4 w-4')}"/>
+            </p>
+        </a>
+    </section>
+
+    <!--/* ============ En espera ============ */-->
+    <section th:if="${!#lists.isEmpty(enEspera)}" class="mb-8" aria-labelledby="titulo-espera">
+        <h2 id="titulo-espera" class="mb-3 text-[19px]">
+            En espera <span class="text-secundario" th:text="|(${#lists.size(enEspera)})|"></span>
+        </h2>
+        <ol class="space-y-4">
+            <li th:each="e, i : ${enEspera}" class="card card-body">
+                <div class="flex items-start gap-4">
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[17px] font-bold text-accent"
+                          th:text="${i.count}">1</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <p class="text-[13px] font-semibold text-secundario" th:text="${e.numero}"></p>
+                            <span class="estado" th:classappend="|estado-${e.estado}|"
+                                  th:text="${T(com.ferreteria.pedidos.domain.EstadoPedido).etiquetaDe(e.estado)}"></span>
+                        </div>
+                        <h3 class="text-[19px]" th:text="${e.cliente}"></h3>
+                        <p class="mt-1 flex items-start gap-2 text-[15px]">
+                            <th:block th:replace="~{fragments/iconos :: ubicacion('mt-0.5 h-4 w-4 shrink-0 text-accent')}"/>
+                            <span th:text="${e.direccion}"></span>
+                        </p>
+                        <p class="mt-1 text-[14px] text-secundario">
+                            <span th:text="${@formato.moneda(e.total)}"></span> ·
+                            <span th:text="${e.medioPago.etiqueta}"></span>
+                            <th:block th:if="${e.asignadoEn != null}"> · asignado <span th:text="${@formato.fecha(e.asignadoEn)}"></span></th:block>
+                        </p>
+
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <form method="post" th:action="@{/Entregas/{id}/comenzar(id=${e.id})}">
+                                <button type="submit" class="btn btn-primary" th:disabled="${enRuta != null}">
+                                    <th:block th:replace="~{fragments/iconos :: play('h-4 w-4')}"/>Comenzar
+                                </button>
+                            </form>
+                            <a th:href="@{/Entregas/{id}(id=${e.id})}" class="btn btn-secondary">Ver detalle</a>
+                        </div>
+                        <p th:if="${enRuta != null}" class="ayuda">Termina la entrega que llevas en ruta para comenzar esta.</p>
+                    </div>
+                </div>
+            </li>
+        </ol>
+    </section>
+
+    <!--/* ============ Cerradas ============ */-->
+    <section th:if="${!#lists.isEmpty(cerradas)}" aria-labelledby="titulo-cerradas">
+        <h2 id="titulo-cerradas" class="mb-3 text-[19px]">Terminadas</h2>
+        <div class="card overflow-hidden">
+            <ul class="divide-y divide-separador/20">
+                <li th:each="e : ${cerradas}">
+                    <a th:href="@{/Entregas/{id}(id=${e.id})}" class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-relleno/10">
+                        <span class="min-w-0">
+                            <span class="block text-[13px] font-semibold text-secundario" th:text="${e.numero}"></span>
+                            <span class="block truncate" th:text="${e.cliente} + ' · ' + ${e.direccion}"></span>
+                        </span>
+                        <span class="estado shrink-0" th:classappend="|estado-${e.estado}|"
+                              th:text="${T(com.ferreteria.pedidos.domain.EstadoPedido).etiquetaDe(e.estado)}"></span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </section>
+</th:block>
+</body>
+</html>

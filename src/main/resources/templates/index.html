@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: pagina('Inicio', 'inicio', ~{::contenido}, ~{})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <header class="mb-8">
+        <p class="text-[15px] font-medium text-secundario">Bienvenido</p>
+        <h1><span sec:authentication="name">usuario</span></h1>
+        <p class="mt-1 text-secundario" th:if="${@contextoSucursal.activa() != null}">
+            <span th:text="${@contextoSucursal.activa().nombre}">Sede</span>
+            <span th:if="${@contextoSucursal.activa().direccion != null}"> · <span
+                    th:text="${@contextoSucursal.activa().direccion}"></span></span>
+        </p>
+    </header>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+        <!-- Vendedor y administrador -->
+        <th:block sec:authorize="hasAnyRole('admin','vendedor')">
+            <a class="card-enlace" th:href="@{/Ventas/Nueva}">
+                <span class="icono-tile bg-exito">
+                    <th:block th:replace="~{fragments/iconos :: carrito('h-6 w-6')}"/>
+                </span>
+                <h2 class="mt-4 text-[19px]">Nueva venta</h2>
+                <p class="mt-0.5 text-[15px] text-secundario">Venta en el local: quién compra, qué se lleva y cuánto.</p>
+            </a>
+
+            <a class="card-enlace" th:href="@{/Pedidos/Nuevo}">
+                <span class="icono-tile bg-aviso">
+                    <th:block th:replace="~{fragments/iconos :: moto('h-6 w-6')}"/>
+                </span>
+                <h2 class="mt-4 text-[19px]">Nuevo pedido</h2>
+                <p class="mt-0.5 text-[15px] text-secundario">Domicilio: se entrega en la dirección del cliente.</p>
+            </a>
+
+            <a class="card-enlace" th:href="@{/Ventas}">
+                <span class="icono-tile bg-turquesa">
+                    <th:block th:replace="~{fragments/iconos :: recibo('h-6 w-6')}"/>
+                </span>
+                <h2 class="mt-4 text-[19px]">Ventas</h2>
+                <p class="mt-0.5 text-[15px] text-secundario">Las ventas en el local de los últimos 3 meses.</p>
+            </a>
+
+            <a class="card-enlace" th:href="@{/Pedidos/Lista}">
+                <span class="icono-tile bg-accent">
+                    <th:block th:replace="~{fragments/iconos :: recibo('h-6 w-6')}"/>
+                </span>
+                <h2 class="mt-4 text-[19px]">Pedidos</h2>
+                <p class="mt-0.5 text-[15px] text-secundario">Los domicilios de los últimos 3 meses y su estado.</p>
+            </a>
+
+            <a class="card-enlace" th:href="@{/Productos}">
+                <span class="icono-tile bg-indigo">
+                    <th:block th:replace="~{fragments/iconos :: caja('h-6 w-6')}"/>
+                </span>
+                <h2 class="mt-4 text-[19px]">Inventario</h2>
+                <p class="mt-0.5 text-[15px] text-secundario">Productos, precios y existencias de la sucursal.</p>
+            </a>
+        </th:block>
+
+        <!-- Domiciliario -->
+        <a sec:authorize="hasRole('domiciliario')" class="card-enlace" th:href="@{/Entregas}">
+            <span class="icono-tile bg-aviso">
+                <th:block th:replace="~{fragments/iconos :: moto('h-6 w-6')}"/>
+            </span>
+            <h2 class="mt-4 text-[19px]">Mis entregas</h2>
+            <p class="mt-0.5 text-[15px] text-secundario">Los pedidos que te asignaron, con la ruta y el cliente.</p>
+        </a>
+
+        <!-- Solo administrador -->
+        <th:block sec:authorize="hasRole('admin')">
+            <a class="card-enlace" th:href="@{/Pedidos/Mapa}">
+                <span class="icono-tile bg-peligro">
+                    <th:block th:replace="~{fragments/iconos :: mapa('h-6 w-6')}"/>
+                </span>
+                <h2 class="mt-4 text-[19px]">Mapa de domicilios</h2>
+                <p class="mt-0.5 text-[15px] text-secundario">Dónde se generan los pedidos, en todas las sucursales.</p>
+            </a>
+
+            <a class="card-enlace" th:href="@{/Sucursales}">
+                <span class="icono-tile bg-exito">
+                    <th:block th:replace="~{fragments/iconos :: tienda('h-6 w-6')}"/>
+                </span>
+                <h2 class="mt-4 text-[19px]">Sucursales</h2>
+                <p class="mt-0.5 text-[15px] text-secundario">Crear sucursales y ubicarlas en el mapa.</p>
+            </a>
+
+            <a class="card-enlace" th:href="@{/Usuarios}">
+                <span class="icono-tile bg-indigo">
+                    <th:block th:replace="~{fragments/iconos :: usuarios('h-6 w-6')}"/>
+                </span>
+                <h2 class="mt-4 text-[19px]">Usuarios</h2>
+                <p class="mt-0.5 text-[15px] text-secundario">Vendedores y domiciliarios de cada sucursal.</p>
+            </a>
+
+            <a class="card-enlace" th:href="@{/Descuentos}">
+                <span class="icono-tile bg-morado">
+                    <th:block th:replace="~{fragments/iconos :: porcentaje('h-6 w-6')}"/>
+                </span>
+                <h2 class="mt-4 text-[19px]">Descuentos</h2>
+                <p class="mt-0.5 text-[15px] text-secundario">Definir el descuento de cada vendedor.</p>
+            </a>
+
+            <a class="card-enlace" th:href="@{/Eventos}">
+                <span class="icono-tile bg-turquesa">
+                    <th:block th:replace="~{fragments/iconos :: historial('h-6 w-6')}"/>
+                </span>
+                <h2 class="mt-4 text-[19px]">Registro de eventos</h2>
+                <p class="mt-0.5 text-[15px] text-secundario">Ventas, descuentos, pedidos y cambios de inventario.</p>
+            </a>
+        </th:block>
+
+    </div>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina('Registro de eventos', 'eventos', ~{::contenido}, ~{})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <header class="mb-6">
+        <h1>Registro de eventos</h1>
+        <p class="text-secundario">
+            Ventas, descuentos, pedidos y cambios de inventario, con quién los hizo y cuándo.
+        </p>
+    </header>
+
+    <form method="get" th:action="@{/Eventos}" class="mb-4 flex flex-wrap gap-3">
+        <div>
+            <label for="tipo" class="sr-only">Tipo de evento</label>
+            <select id="tipo" name="tipo" class="input" data-autosubmit>
+                <option value="">Todos los tipos</option>
+                <option th:each="t : ${tipos}" th:value="${t.name()}" th:text="${t.etiqueta}"
+                        th:selected="${t.name() == tipoElegido}"></option>
+            </select>
+        </div>
+        <div>
+            <label for="sucursal" class="sr-only">Sucursal</label>
+            <select id="sucursal" name="sucursal" class="input" data-autosubmit>
+                <option value="">Todas las sucursales</option>
+                <option th:each="s : ${listaSucursales}" th:value="${s.id}" th:text="${s.nombre}"
+                        th:selected="${sucursalElegida != null && s.id == sucursalElegida}"></option>
+            </select>
+        </div>
+    </form>
+
+    <div th:if="${#lists.isEmpty(eventos)}" class="aviso aviso-info"><p>No hay eventos con esos filtros.</p></div>
+
+    <div th:unless="${#lists.isEmpty(eventos)}" class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="tabla">
+                <caption class="sr-only">Eventos registrados</caption>
+                <thead>
+                <tr>
+                    <th scope="col">Fecha</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Quién</th>
+                    <th scope="col">Sucursal</th>
+                    <th scope="col">Detalle</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="e : ${eventos}">
+                    <td class="whitespace-nowrap text-secundario" th:text="${@formato.fecha(e.fecha)}"></td>
+                    <td class="whitespace-nowrap">
+                        <span class="estado"
+                              th:classappend="${e.tipo.name() == 'VENTA'} ? 'estado-entregado'
+                                : (${e.tipo.name() == 'DESCUENTO'} ? 'estado-cancelado'
+                                : (${e.tipo.name() == 'PEDIDO' or e.tipo.name() == 'ESTADO_PEDIDO' or e.tipo.name() == 'ASIGNACION'} ? 'estado-alistado'
+                                : (${e.tipo.name() == 'INVENTARIO' or e.tipo.name() == 'PRODUCTO'} ? 'estado-en_ruta' : 'estado-pendiente')))"
+                              th:text="${e.tipo.etiqueta}"></span>
+                    </td>
+                    <td class="whitespace-nowrap font-medium" th:text="${e.actor}"></td>
+                    <td class="whitespace-nowrap text-secundario" th:text="${e.sucursal}"></td>
+                    <td th:text="${e.descripcion}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <p th:if="${#lists.size(eventos) >= maximo}" class="ayuda mt-3">
+        Se muestran los últimos <span th:text="${maximo}"></span> eventos.
+    </p>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: pagina(|Venta ${venta.numero}|, 'ventas', ~{::contenido}, ~{})}">
+<body>
+<th:block th:fragment="contenido">
+
+    <nav aria-label="Ruta de navegación" class="no-imprimir mb-4 text-sm text-secundario">
+        <ol class="flex flex-wrap items-center gap-2">
+            <li><a th:href="@{/}" class="hover:underline">Inicio</a></li>
+            <li aria-hidden="true">/</li>
+            <li><a th:href="@{/Ventas}" class="hover:underline">Ventas</a></li>
+            <li aria-hidden="true">/</li>
+            <li class="font-semibold text-etiqueta" aria-current="page" th:text="${venta.numero}"></li>
+        </ol>
+    </nav>
+
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h1>Venta <span th:text="${venta.numero}"></span></h1>
+            <p class="text-secundario">
+                <span th:text="${@formato.fecha(venta.fecha)}"></span> · <span th:text="${venta.sucursal}"></span>
+            </p>
+        </div>
+        <button type="button" class="btn btn-secondary no-imprimir" data-imprimir>
+            <th:block th:replace="~{fragments/iconos :: imprimir('h-4 w-4')}"/>Imprimir
+        </button>
+    </div>
+
+    <div class="mb-6 grid gap-6 lg:grid-cols-5">
+        <section class="card card-body lg:col-span-3" aria-labelledby="titulo-cliente">
+            <h2 id="titulo-cliente" class="mb-4 text-[19px]">Quién compró</h2>
+            <dl class="grid gap-x-4 gap-y-3 text-[15px] sm:grid-cols-[9rem_1fr]">
+                <dt class="font-semibold text-secundario">Nombre</dt>
+                <dd th:text="${venta.cliente}"></dd>
+
+                <dt class="font-semibold text-secundario">Teléfono</dt>
+                <dd><a class="text-accent hover:underline" th:href="|tel:${venta.telefono}|" th:text="${venta.telefono}"></a></dd>
+
+                <dt class="font-semibold text-secundario">Atendió</dt>
+                <dd th:text="${venta.vendedor}"></dd>
+            </dl>
+        </section>
+
+        <section class="card card-body lg:col-span-2" aria-labelledby="titulo-resumen">
+            <h2 id="titulo-resumen" class="mb-4 text-[19px]">Resumen</h2>
+            <dl class="grid gap-x-4 gap-y-3 text-[15px] sm:grid-cols-2">
+                <dt class="font-semibold text-secundario">Descuento</dt>
+                <dd th:text="${@formato.porcentaje(venta.descuentoPct)} + '%'"></dd>
+
+                <dt class="font-semibold text-secundario">Medio de pago</dt>
+                <dd class="font-semibold" th:text="${venta.medioPago.etiqueta}"></dd>
+
+                <th:block th:if="${venta.montoRecibido != null}">
+                    <dt class="font-semibold text-secundario">Recibido</dt>
+                    <dd th:text="${@formato.moneda(venta.montoRecibido)}"></dd>
+
+                    <dt class="font-semibold text-secundario">Cambio</dt>
+                    <dd th:text="${@formato.moneda(detalle.cambio())}"></dd>
+                </th:block>
+
+                <dt class="font-semibold text-secundario">Total</dt>
+                <dd class="text-2xl font-bold text-accent" th:text="${@formato.moneda(venta.total)}"></dd>
+            </dl>
+        </section>
+    </div>
+
+    <section aria-labelledby="titulo-productos">
+        <h2 id="titulo-productos" class="mb-3 text-[19px]">Productos</h2>
+        <div class="card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="tabla">
+                    <caption class="sr-only" th:text="|Productos de la venta ${venta.numero}|"></caption>
+                    <thead>
+                    <tr>
+                        <th scope="col">Código</th>
+                        <th scope="col">Producto</th>
+                        <th scope="col">Medida</th>
+                        <th scope="col" class="text-right">Cantidad</th>
+                        <th scope="col" class="text-right">Precio unitario</th>
+                        <th scope="col" class="text-right">Subtotal</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item : ${detalle.items}">
+                        <td class="font-mono text-xs font-semibold" th:text="${item.codigo}"></td>
+                        <td th:text="${item.nombre}"></td>
+                        <td th:text="${item.medida}"></td>
+                        <td class="text-right" th:text="${item.cantidad}"></td>
+                        <td class="whitespace-nowrap text-right" th:text="${@formato.moneda(item.precioUnitario)}"></td>
+                        <td class="whitespace-nowrap text-right" th:text="${@formato.moneda(item.subtotal())}"></td>
+                    </tr>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <th scope="row" colspan="5" class="text-right font-semibold">Subtotal</th>
+                        <td class="whitespace-nowrap text-right" th:text="${@formato.moneda(detalle.subtotal())}"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row" colspan="5" class="text-right font-semibold"
+                            th:text="|Descuento (${@formato.porcentaje(venta.descuentoPct)}%)|"></th>
+                        <td class="whitespace-nowrap text-right" th:text="|− ${@formato.moneda(detalle.montoDescuento())}|"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row" colspan="5" class="text-right text-base">Total</th>
+                        <td class="whitespace-nowrap text-right text-base font-bold" th:text="${@formato.moneda(venta.total)}"></td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <div class="no-imprimir mt-6">
+        <a th:href="@{/Ventas}" class="btn btn-secondary">
+            <th:block th:replace="~{fragments/iconos :: flecha-izquierda('h-4 w-4')}"/>Volver a ventas
+        </a>
+    </div>
+</th:block>
+</body>
+</html>
